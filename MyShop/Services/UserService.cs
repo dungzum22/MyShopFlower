@@ -17,6 +17,7 @@ namespace MyShop.Services
 
         public User Authenticate(string username, string password)
         {
+            var a = 1;
             // Tìm user theo username
             var user = _context.Users.FirstOrDefault(x => x.Username == username);
 
