@@ -19,7 +19,7 @@ namespace MyShop.Services
         /// <returns>Trả về thông tin người dùng sau khi đăng ký, nếu không thành công trả về null</returns>
         User Register(User user);
 
-        bool CheckUsernameExists(string username);  
+        bool CheckUsernameExists(string username);
         bool CheckEmailExists(string email);
         void Logout();
     }
