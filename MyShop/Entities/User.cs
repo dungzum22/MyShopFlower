@@ -17,21 +17,17 @@ public partial class User
 
     public DateTime? CreatedDate { get; set; }
 
-    public int? CreatedBy { get; set; }
-
     public string? Status { get; set; }
 
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
-    public virtual ICollection<Notification> NotificationRecipients { get; set; } = new List<Notification>();
+    public virtual ICollection<Message> MessageRecipients { get; set; } = new List<Message>();
 
-    public virtual ICollection<Notification> NotificationSenders { get; set; } = new List<Notification>();
+    public virtual ICollection<Message> MessageSenders { get; set; } = new List<Message>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
-    public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
-
-    public virtual ICollection<Seller> Sellers { get; set; } = new List<Seller>();
+    public virtual ICollection<ShopInfo> ShopInfos { get; set; } = new List<ShopInfo>();
 
     public virtual ICollection<UserInfo> UserInfos { get; set; } = new List<UserInfo>();
 }

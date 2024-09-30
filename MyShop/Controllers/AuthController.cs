@@ -75,7 +75,7 @@ public class AuthController : Controller
             return BadRequest(new { message = "Email đã tồn tại." });
         }
 
-        // Tạo user mới với mật khẩu đã mã hóa
+        //// Tạo user mới với mật khẩu đã mã hóa
         var newUser = new User
         {
             Username = username,
@@ -93,7 +93,7 @@ public class AuthController : Controller
             return BadRequest(new { message = "Đăng ký không thành công." });
         }
 
-        // Trả về thông tin người dùng đã được tạo
+        //// Trả về thông tin người dùng đã được tạo
         return Ok(new
         {
             UserId = createdUser.UserId,

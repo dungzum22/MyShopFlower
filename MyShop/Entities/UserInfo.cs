@@ -31,7 +31,7 @@ public partial class UserInfo
 
     public int? Points { get; set; }
 
-    public virtual ICollection<Request> Requests { get; set; } = new List<Request>();
+    public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     public virtual User? User { get; set; }
 }

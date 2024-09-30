@@ -5,19 +5,21 @@ namespace MyShop.Entities;
 
 public partial class ShopBrand
 {
-    public int BrandId { get; set; }
+    public int ShopBrandId { get; set; }
 
     public int SellerId { get; set; }
 
-    public string BrandName { get; set; } = null!;
+    public string? Type { get; set; }
 
-    public string? BrandDescription { get; set; }
+    public string ShopName { get; set; } = null!;
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime? CreatedDate { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public string? Introduction { get; set; }
+
+    public DateTime? UpdateAt { get; set; }
 
     public int? Quantity { get; set; }
 
-    public virtual Seller Seller { get; set; } = null!;
+    public virtual ShopInfo Seller { get; set; } = null!;
 }

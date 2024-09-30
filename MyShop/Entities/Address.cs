@@ -5,9 +5,11 @@ namespace MyShop.Entities;
 
 public partial class Address
 {
-    public int UserInfoId { get; set; }
+    public int AddressId { get; set; }
+
+    public int? UserInfoId { get; set; }
 
     public string? Description { get; set; }
 
-    public virtual UserInfo UserInfo { get; set; } = null!;
+    public virtual UserInfo? UserInfo { get; set; }
 }
