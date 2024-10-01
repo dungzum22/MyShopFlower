@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyShop.DataContext;
+using MyShop.Filters;
 using MyShop.Services;
 using System.Text;
 
@@ -46,6 +47,14 @@ namespace MyShop
                 };
             });
 
+            builder.Services.AddSwaggerGen(c =>
+            {
+                // Các cấu hình Swagger khác
+
+                // Thêm bộ lọc để loại bỏ các trường không mong muốn
+                c.OperationFilter<RemoveUnusedFieldsOperationFilter>();
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -56,6 +65,8 @@ namespace MyShop
             }
 
             app.UseHttpsRedirection();
+            // Cho phép phục vụ các file tĩnh (như hình ảnh) từ thư mục wwwroot
+            app.UseStaticFiles();  // Thêm dòng này để cho phép phục vụ file tĩnh
 
             // Kích hoạt Authentication và Authorization middleware
             app.UseAuthentication();
@@ -64,6 +75,8 @@ namespace MyShop
             app.MapControllers();
 
             app.Run();
+
+
         }
     }
 }
