@@ -2,7 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyShop.DataContext;
-using MyShop.Services;
+using MyShop.Services.Flowers;
+using MyShop.Services.Users;
 using System.Text;
 
 namespace MyShop
@@ -26,6 +27,9 @@ namespace MyShop
 
             // Đăng ký UserService vào Dependency Injection (DI)
             builder.Services.AddScoped<IUserService, UserService>();
+
+            builder.Services.AddScoped<FlowerService>();
+
 
             // Cấu hình JWT Authentication
             var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
