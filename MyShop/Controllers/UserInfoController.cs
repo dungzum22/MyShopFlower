@@ -26,7 +26,7 @@ namespace MyShop.Controllers
             _logger = logger;
         }
 
-        //// API GET UserInfo: Lấy thông tin người dùng từ JWT
+        // API GET UserInfo: Lấy thông tin người dùng từ JWT
         //[HttpGet("info")]
         //public async Task<IActionResult> GetUserInfo()
         //{
