@@ -9,11 +9,11 @@ public partial class Cart
 
     public int? UserId { get; set; }
 
-    public int? FlowerInfoId { get; set; }
+    public int? FlowerId { get; set; }
 
     public int Quantity { get; set; }
 
-    public virtual FlowerInfo? FlowerInfo { get; set; }
+    public virtual FlowerInfo? Flower { get; set; }
 
     public virtual User? User { get; set; }
 }

@@ -39,14 +39,15 @@ public partial class FlowershopContext : DbContext
     public virtual DbSet<UserInfo> UserInfos { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=(local);Database= Flowershop;UID=sa;PWD=123;TrustServerCertificate=True");
+    {
+
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__CAA247C8EF215E8D");
+            entity.HasKey(e => e.AddressId).HasName("PK__Address__CAA247C8531B9724");
 
             entity.ToTable("Address");
 
@@ -63,18 +64,18 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => e.CartId).HasName("PK__Cart__2EF52A278051E2F6");
+            entity.HasKey(e => e.CartId).HasName("PK__Cart__2EF52A27520456C1");
 
             entity.ToTable("Cart");
 
             entity.Property(e => e.CartId).HasColumnName("cart_id");
-            entity.Property(e => e.FlowerInfoId).HasColumnName("flower_info_id");
+            entity.Property(e => e.FlowerId).HasColumnName("flower_id");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.FlowerInfo).WithMany(p => p.Carts)
-                .HasForeignKey(d => d.FlowerInfoId)
-                .HasConstraintName("FK__Cart__flower_inf__4BAC3F29");
+            entity.HasOne(d => d.Flower).WithMany(p => p.Carts)
+                .HasForeignKey(d => d.FlowerId)
+                .HasConstraintName("FK__Cart__flower_id__4BAC3F29");
 
             entity.HasOne(d => d.User).WithMany(p => p.Carts)
                 .HasForeignKey(d => d.UserId)
@@ -83,7 +84,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__D54EE9B4613C6613");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__D54EE9B4B0DB51A1");
 
             entity.ToTable("Category");
 
@@ -95,7 +96,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<FlowerInfo>(entity =>
         {
-            entity.HasKey(e => e.FlowerId).HasName("PK__Flower_I__177E0A7E59FF9820");
+            entity.HasKey(e => e.FlowerId).HasName("PK__Flower_I__177E0A7E6134603F");
 
             entity.ToTable("Flower_Info");
 
@@ -126,7 +127,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE6538407DB");
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE607693886");
 
             entity.Property(e => e.MessageId).HasColumnName("message_id");
             entity.Property(e => e.CreatedDate)
@@ -154,7 +155,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Orders__4659622981F96407");
+            entity.HasKey(e => e.OrderId).HasName("PK__Orders__4659622931BCD3BA");
 
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.CreatedDate)
@@ -191,7 +192,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<OrdersDetail>(entity =>
         {
-            entity.HasKey(e => e.OrderDetailId).HasName("PK__Orders_D__3C5A4080BF91B409");
+            entity.HasKey(e => e.OrderDetailId).HasName("PK__Orders_D__3C5A4080E1F9354F");
 
             entity.ToTable("Orders_Detail");
 
@@ -228,7 +229,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<Report>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__Report__779B7C586B012239");
+            entity.HasKey(e => e.ReportId).HasName("PK__Report__779B7C58D3E0C8C3");
 
             entity.ToTable("Report");
 
@@ -273,7 +274,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<Seller>(entity =>
         {
-            entity.HasKey(e => e.SellerId).HasName("PK__Seller__780A0A9772EB7208");
+            entity.HasKey(e => e.SellerId).HasName("PK__Seller__780A0A97E90795DE");
 
             entity.ToTable("Seller");
 
@@ -313,9 +314,9 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370F97969FB6");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370F58A299F8");
 
-            entity.HasIndex(e => e.Username, "UQ__Users__F3DBC572297A0BEC").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__Users__F3DBC572FBDD6866").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CreatedDate)
@@ -342,7 +343,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<UserInfo>(entity =>
         {
-            entity.HasKey(e => e.UserInfoId).HasName("PK__User_Inf__82ABEB549A42A5FF");
+            entity.HasKey(e => e.UserInfoId).HasName("PK__User_Inf__82ABEB5485F006F4");
 
             entity.ToTable("User_Info");
 
