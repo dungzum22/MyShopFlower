@@ -29,7 +29,7 @@ namespace MyShop
             builder.Services.AddScoped<IUserService, UserService>();
 
             builder.Services.AddScoped<FlowerService>();
-
+            builder.Services.AddScoped<CategoryService>();
 
             // Cấu hình JWT Authentication
             var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);

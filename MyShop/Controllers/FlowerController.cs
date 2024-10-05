@@ -19,7 +19,7 @@ public class FlowerInfoController : ControllerBase
 
     // POST api/flowerinfo
     [HttpPost("Create")]
-    public IActionResult CreateFlower([FromForm] string flowername, [FromForm] string flowerdiscrpt, [FromForm] decimal price, [FromForm] int quantity)
+    public IActionResult CreateFlower([FromForm] string flowername, [FromForm] string flowerdiscrpt, [FromForm] decimal price, [FromForm] int quantity, [FromForm] int catagory)
     {
         // Create a new flower
         var newFlower = new FlowerInfo
@@ -28,6 +28,7 @@ public class FlowerInfoController : ControllerBase
             FlowerDescription = flowerdiscrpt,
             Price = price,
             CreatedAt = DateTime.UtcNow,
+            CategoryId = catagory,
             AvailableQuantity = quantity,
         };
 
@@ -40,6 +41,8 @@ public class FlowerInfoController : ControllerBase
             FlowerName = createdFlower.FlowerName,
             FlowerDescription = createdFlower.FlowerDescription,
             Price = createdFlower.Price,
+            AvailableQuantity = createdFlower.AvailableQuantity,
+            CategoryID = createdFlower.CategoryId,
             message = "Flower created successfully"
         });
     }
@@ -64,6 +67,7 @@ public class FlowerInfoController : ControllerBase
             FlowerDescription = flower.FlowerDescription,
             Price = flower.Price,
             AvailableQuantity = flower.AvailableQuantity,
+            CategoryID = flower.CategoryId
         });
     }
 
