@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using MyShop.Entities;
-using MyShop.Services;
+using MyShop.Services.Users;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;

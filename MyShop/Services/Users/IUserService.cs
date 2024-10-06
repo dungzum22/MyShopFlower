@@ -1,6 +1,6 @@
 ﻿using MyShop.Entities;
 
-namespace MyShop.Services
+namespace MyShop.Services.Users
 {
     public interface IUserService
     {
