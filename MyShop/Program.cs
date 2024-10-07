@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyShop.DataContext;
+using MyShop.Services;
 using MyShop.Services.Flowers;
 using MyShop.Services.Users;
 using System.Text;
@@ -30,6 +31,7 @@ namespace MyShop
 
             builder.Services.AddScoped<FlowerService>();
             builder.Services.AddScoped<CategoryService>();
+            builder.Services.AddScoped<SearchService>();
 
             // Cấu hình JWT Authentication
             var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
