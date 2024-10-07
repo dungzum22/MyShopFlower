@@ -4,7 +4,7 @@ using System.Linq;
 
 using Org.BouncyCastle.Crypto.Generators;
 
-namespace MyShop.Services
+namespace MyShop.Services.Users
 {
     public class UserService : IUserService
     {
