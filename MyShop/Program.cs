@@ -8,6 +8,7 @@ using MyShop.Services.Users;
 using MyShop.Filters;
 using MyShop.Services;
 using System.Text;
+using Amazon.S3;
 
 namespace MyShop
 {
@@ -17,12 +18,31 @@ namespace MyShop
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Đọc thông tin AWS từ appsettings.json
+            var accessKey = builder.Configuration["AWS:AccessKey"];
+            var secretKey = builder.Configuration["AWS:SecretKey"];
+            var region = builder.Configuration["AWS:Region"];
+
+            if (string.IsNullOrEmpty(accessKey) || string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(region))
+            {
+                throw new Exception("AWS credentials or region are missing in appsettings.json");
+            }
+
+            var awsCredentials = new Amazon.Runtime.BasicAWSCredentials(accessKey, secretKey);
+            var s3Client = new AmazonS3Client(awsCredentials, Amazon.RegionEndpoint.GetBySystemName(region));
+
+            // Đăng ký IAmazonS3
+            builder.Services.AddSingleton<IAmazonS3>(s3Client);
+
+            // Đăng ký S3StorageService
+            builder.Services.AddSingleton<S3StorageService>();
+
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            //Đăng ký DbContext để kết nối với cơ sở dữ liệu
+            // Đăng ký DbContext để kết nối với cơ sở dữ liệu
             builder.Services.AddDbContext<FlowershopContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -50,8 +70,6 @@ namespace MyShop
                     ValidateAudience = false,
                 };
             });
-
-
 
             builder.Services.AddSwaggerGen(c =>
             {
@@ -84,8 +102,7 @@ namespace MyShop
                 });
             });
 
-
-            //Add CORS setup to get API
+            // Add CORS setup to get API
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAllOrigins", policy =>
@@ -109,7 +126,7 @@ namespace MyShop
             // Cho phép phục vụ các file tĩnh (như hình ảnh) từ thư mục wwwroot
             app.UseStaticFiles();  // Thêm dòng này để cho phép phục vụ file tĩnh
 
-            //user CORS
+            // Use CORS
             app.UseCors("AllowAllOrigins");
 
             // Kích hoạt Authentication và Authorization middleware
@@ -119,8 +136,6 @@ namespace MyShop
             app.MapControllers();
 
             app.Run();
-
-
         }
     }
 }
