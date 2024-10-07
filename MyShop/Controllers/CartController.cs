@@ -30,7 +30,7 @@ namespace MyShop.Controllers
         public async Task<IActionResult> GetCart()
         {
             // Lấy user_id từ JWT token
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
                 return Unauthorized("Không thể lấy thông tin người dùng từ token.");
@@ -72,7 +72,7 @@ namespace MyShop.Controllers
         public async Task<IActionResult> AddToCart([FromQuery] int flowerId, [FromQuery] int quantity)
         {
             // Lấy user_id từ JWT token
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
                 return Unauthorized("Không thể lấy thông tin người dùng từ token.");
@@ -122,7 +122,7 @@ namespace MyShop.Controllers
         public async Task<IActionResult> RemoveFromCart(int flowerId)
         {
             // Lấy user_id từ JWT token
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
                 return Unauthorized("Không thể lấy thông tin người dùng từ token.");
