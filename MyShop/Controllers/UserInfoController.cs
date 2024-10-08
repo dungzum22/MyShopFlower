@@ -69,7 +69,8 @@ namespace MyShop.Controllers
                     userInfo.Avatar,
                     userInfo.Points,
                     userInfo.CreatedDate,
-                    userInfo.UpdatedDate
+                    userInfo.UpdatedDate,
+                    Role = (bool)userInfo.IsSeller ? "Seller" : "User bình thường"
                 });
             }
             catch (Exception ex)
@@ -186,7 +187,7 @@ namespace MyShop.Controllers
                 Address = createUserInfoDto.Address,
                 BirthDate = createUserInfoDto.BirthDate,
                 Sex = createUserInfoDto.Sex,
-                Points = 0,
+                Points = 100,
                 CreatedDate = DateTime.UtcNow,
                 UpdatedDate = DateTime.UtcNow
             };
