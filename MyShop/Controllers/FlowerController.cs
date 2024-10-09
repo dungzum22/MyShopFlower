@@ -8,10 +8,10 @@ using MyShop.Services.Flowers;
 public class FlowerInfoController : ControllerBase
 {
     private readonly FlowershopContext _context;
-    private readonly FlowerService _flowerService;
+    private readonly IFlowerService _flowerService;
 
     // Constructor injection for both context and flower service
-    public FlowerInfoController(FlowershopContext context, FlowerService flowerService)
+    public FlowerInfoController(FlowershopContext context, IFlowerService flowerService)
     {
         _context = context;
         _flowerService = flowerService;

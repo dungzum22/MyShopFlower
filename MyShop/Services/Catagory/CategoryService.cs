@@ -2,7 +2,7 @@
 using MyShop.Entities;
 
 
-public class CategoryService 
+public class CategoryService
 {
     private readonly FlowershopContext _context;
 

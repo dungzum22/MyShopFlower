@@ -62,7 +62,7 @@ public class AuthController : Controller
         });
     }
 
-        [HttpPost("register")]
+    [HttpPost("register")]
     public IActionResult Register([FromForm] string username, [FromForm] string password, [FromForm] string email)
     {
         // Kiểm tra xem username đã tồn tại chưa

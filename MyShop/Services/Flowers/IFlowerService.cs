@@ -7,5 +7,6 @@ namespace MyShop.Services.Flowers
         //bool CheckFlowerExists(string flowername);
         FlowerInfo CreateFlower(FlowerInfo flower);
         FlowerInfo GetFlowerById(int id);
+        FlowerInfo UpdateFlower(FlowerInfo flower);
     }
 }
