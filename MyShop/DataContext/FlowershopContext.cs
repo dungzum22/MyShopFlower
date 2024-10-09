@@ -30,6 +30,8 @@ public partial class FlowershopContext : DbContext
 
     public virtual DbSet<OrdersDetail> OrdersDetails { get; set; }
 
+    public virtual DbSet<PaymentMethod> PaymentMethods { get; set; }
+
     public virtual DbSet<Report> Reports { get; set; }
 
     public virtual DbSet<Seller> Sellers { get; set; }
@@ -39,15 +41,14 @@ public partial class FlowershopContext : DbContext
     public virtual DbSet<UserInfo> UserInfos { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-
-    }
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=(local);Database= Flowershop;UID=sa;PWD=123;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Address>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("PK__Address__CAA247C8531B9724");
+            entity.HasKey(e => e.AddressId).HasName("PK__Address__CAA247C8CCB4943F");
 
             entity.ToTable("Address");
 
@@ -59,12 +60,12 @@ public partial class FlowershopContext : DbContext
 
             entity.HasOne(d => d.UserInfo).WithMany(p => p.Addresses)
                 .HasForeignKey(d => d.UserInfoId)
-                .HasConstraintName("FK__Address__user_in__6A30C649");
+                .HasConstraintName("FK__Address__user_in__72C60C4A");
         });
 
         modelBuilder.Entity<Cart>(entity =>
         {
-            entity.HasKey(e => e.CartId).HasName("PK__Cart__2EF52A27520456C1");
+            entity.HasKey(e => e.CartId).HasName("PK__Cart__2EF52A276AFDE471");
 
             entity.ToTable("Cart");
 
@@ -75,16 +76,16 @@ public partial class FlowershopContext : DbContext
 
             entity.HasOne(d => d.Flower).WithMany(p => p.Carts)
                 .HasForeignKey(d => d.FlowerId)
-                .HasConstraintName("FK__Cart__flower_id__4BAC3F29");
+                .HasConstraintName("FK__Cart__flower_id__4CA06362");
 
             entity.HasOne(d => d.User).WithMany(p => p.Carts)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__Cart__user_id__4AB81AF0");
+                .HasConstraintName("FK__Cart__user_id__4BAC3F29");
         });
 
         modelBuilder.Entity<Category>(entity =>
         {
-            entity.HasKey(e => e.CategoryId).HasName("PK__Category__D54EE9B4B0DB51A1");
+            entity.HasKey(e => e.CategoryId).HasName("PK__Category__D54EE9B448A6D80C");
 
             entity.ToTable("Category");
 
@@ -96,7 +97,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<FlowerInfo>(entity =>
         {
-            entity.HasKey(e => e.FlowerId).HasName("PK__Flower_I__177E0A7E6134603F");
+            entity.HasKey(e => e.FlowerId).HasName("PK__Flower_I__177E0A7EB0245FDE");
 
             entity.ToTable("Flower_Info");
 
@@ -122,12 +123,12 @@ public partial class FlowershopContext : DbContext
 
             entity.HasOne(d => d.Category).WithMany(p => p.FlowerInfos)
                 .HasForeignKey(d => d.CategoryId)
-                .HasConstraintName("FK__Flower_In__categ__47DBAE45");
+                .HasConstraintName("FK__Flower_In__categ__48CFD27E");
         });
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE607693886");
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE6EB89B2D9");
 
             entity.Property(e => e.MessageId).HasColumnName("message_id");
             entity.Property(e => e.CreatedDate)
@@ -145,17 +146,17 @@ public partial class FlowershopContext : DbContext
             entity.HasOne(d => d.Recipient).WithMany(p => p.MessageRecipients)
                 .HasForeignKey(d => d.RecipientId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Messages__recipi__6FE99F9F");
+                .HasConstraintName("FK__Messages__recipi__787EE5A0");
 
             entity.HasOne(d => d.Sender).WithMany(p => p.MessageSenders)
                 .HasForeignKey(d => d.SenderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Messages__sender__6EF57B66");
+                .HasConstraintName("FK__Messages__sender__778AC167");
         });
 
         modelBuilder.Entity<Order>(entity =>
         {
-            entity.HasKey(e => e.OrderId).HasName("PK__Orders__4659622931BCD3BA");
+            entity.HasKey(e => e.OrderId).HasName("PK__Orders__4659622933017939");
 
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.CreatedDate)
@@ -168,14 +169,15 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.FlowerName)
                 .HasMaxLength(255)
                 .HasColumnName("flower_name");
-            entity.Property(e => e.PaymentMethod)
-                .HasMaxLength(255)
-                .HasColumnName("payment_method");
-            entity.Property(e => e.PhoneNumber).HasColumnName("phone_number");
+            entity.Property(e => e.PaymentMethodId).HasColumnName("payment_method_id");
+            entity.Property(e => e.PhoneNumber)
+                .HasMaxLength(20)
+                .HasColumnName("phone_number");
             entity.Property(e => e.Price)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("price");
             entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.SellerId).HasColumnName("seller_id");
             entity.Property(e => e.ShippingAddress)
                 .HasMaxLength(255)
                 .HasColumnName("shipping_address");
@@ -184,15 +186,24 @@ public partial class FlowershopContext : DbContext
                 .HasDefaultValue("pending")
                 .HasColumnName("status");
             entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Voucher).HasColumnName("voucher");
+
+            entity.HasOne(d => d.PaymentMethod).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.PaymentMethodId)
+                .HasConstraintName("FK__Orders__payment___5EBF139D");
+
+            entity.HasOne(d => d.Seller).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.SellerId)
+                .HasConstraintName("FK__Orders__seller_i__5DCAEF64");
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__Orders__user_id__5070F446");
+                .HasConstraintName("FK__Orders__user_id__5CD6CB2B");
         });
 
         modelBuilder.Entity<OrdersDetail>(entity =>
         {
-            entity.HasKey(e => e.OrderDetailId).HasName("PK__Orders_D__3C5A4080E1F9354F");
+            entity.HasKey(e => e.OrderDetailId).HasName("PK__Orders_D__3C5A40809230F3B3");
 
             entity.ToTable("Orders_Detail");
 
@@ -210,6 +221,7 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Price)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("price");
+            entity.Property(e => e.SellerId).HasColumnName("seller_id");
             entity.Property(e => e.Status)
                 .HasMaxLength(20)
                 .HasDefaultValue("pending")
@@ -219,17 +231,40 @@ public partial class FlowershopContext : DbContext
             entity.HasOne(d => d.Flower).WithMany(p => p.OrdersDetails)
                 .HasForeignKey(d => d.FlowerId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK__Orders_De__flowe__5629CD9C");
+                .HasConstraintName("FK__Orders_De__flowe__656C112C");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrdersDetails)
                 .HasForeignKey(d => d.OrderId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK__Orders_De__order__5535A963");
+                .HasConstraintName("FK__Orders_De__order__6477ECF3");
+
+            entity.HasOne(d => d.Seller).WithMany(p => p.OrdersDetails)
+                .HasForeignKey(d => d.SellerId)
+                .HasConstraintName("FK__Orders_De__selle__66603565");
+        });
+
+        modelBuilder.Entity<PaymentMethod>(entity =>
+        {
+            entity.HasKey(e => e.PaymentMethodId).HasName("PK__Payment___8A3EA9EB68608E3A");
+
+            entity.ToTable("Payment_Method");
+
+            entity.Property(e => e.PaymentMethodId).HasColumnName("payment_method_id");
+            entity.Property(e => e.CreatedDate)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("created_date");
+            entity.Property(e => e.Description)
+                .HasMaxLength(500)
+                .HasColumnName("description");
+            entity.Property(e => e.MethodName)
+                .HasMaxLength(255)
+                .HasColumnName("method_name");
         });
 
         modelBuilder.Entity<Report>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__Report__779B7C58D3E0C8C3");
+            entity.HasKey(e => e.ReportId).HasName("PK__Report__779B7C58B13C111A");
 
             entity.ToTable("Report");
 
@@ -259,22 +294,22 @@ public partial class FlowershopContext : DbContext
             entity.HasOne(d => d.Flower).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.FlowerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Report__flower_i__656C112C");
+                .HasConstraintName("FK__Report__flower_i__6E01572D");
 
             entity.HasOne(d => d.Seller).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.SellerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Report__seller_i__66603565");
+                .HasConstraintName("FK__Report__seller_i__6EF57B66");
 
             entity.HasOne(d => d.User).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Report__user_id__6477ECF3");
+                .HasConstraintName("FK__Report__user_id__6D0D32F4");
         });
 
         modelBuilder.Entity<Seller>(entity =>
         {
-            entity.HasKey(e => e.SellerId).HasName("PK__Seller__780A0A97E90795DE");
+            entity.HasKey(e => e.SellerId).HasName("PK__Seller__780A0A974B879B93");
 
             entity.ToTable("Seller");
 
@@ -286,7 +321,9 @@ public partial class FlowershopContext : DbContext
             entity.Property(e => e.Introduction)
                 .HasColumnType("text")
                 .HasColumnName("introduction");
-            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.Quantity)
+                .HasDefaultValue(0)
+                .HasColumnName("quantity");
             entity.Property(e => e.Role)
                 .HasMaxLength(20)
                 .HasColumnName("role");
@@ -309,14 +346,14 @@ public partial class FlowershopContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Sellers)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Seller__user_id__5EBF139D");
+                .HasConstraintName("FK__Seller__user_id__5535A963");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370F58A299F8");
+            entity.HasKey(e => e.UserId).HasName("PK__Users__B9BE370FD9E83442");
 
-            entity.HasIndex(e => e.Username, "UQ__Users__F3DBC572FBDD6866").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__Users__F3DBC572DF506E50").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CreatedDate)
@@ -343,7 +380,7 @@ public partial class FlowershopContext : DbContext
 
         modelBuilder.Entity<UserInfo>(entity =>
         {
-            entity.HasKey(e => e.UserInfoId).HasName("PK__User_Inf__82ABEB5485F006F4");
+            entity.HasKey(e => e.UserInfoId).HasName("PK__User_Inf__82ABEB54AA036661");
 
             entity.ToTable("User_Info");
 
@@ -379,7 +416,7 @@ public partial class FlowershopContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.UserInfos)
                 .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__User_Info__user___412EB0B6");
+                .HasConstraintName("FK__User_Info__user___4222D4EF");
         });
 
         OnModelCreatingPartial(modelBuilder);

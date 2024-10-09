@@ -9,6 +9,8 @@ public partial class OrdersDetail
 
     public int? OrderId { get; set; }
 
+    public int? SellerId { get; set; }
+
     public string? FlowerName { get; set; }
 
     public int? FlowerId { get; set; }
@@ -26,4 +28,6 @@ public partial class OrdersDetail
     public virtual FlowerInfo? Flower { get; set; }
 
     public virtual Order? Order { get; set; }
+
+    public virtual Seller? Seller { get; set; }
 }

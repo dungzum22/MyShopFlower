@@ -210,7 +210,7 @@ namespace MyShop.Controllers
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "An error occurred while uploading the avatar to S3.");
-                    return StatusCode(500,$"Có lỗi xảy ra khi tải ảnh lên:{ex.Message}");
+                    return StatusCode(500, $"Có lỗi xảy ra khi tải ảnh lên:{ex.Message}");
                 }
             }
 

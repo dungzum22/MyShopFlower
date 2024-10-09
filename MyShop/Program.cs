@@ -34,7 +34,7 @@ namespace MyShop
             // Đăng ký IAmazonS3
             builder.Services.AddSingleton<IAmazonS3>(s3Client);
 
-            // Đăng ký S3StorageService
+            //Đăng ký S3StorageService
             builder.Services.AddSingleton<S3StorageService>();
 
             // Add services to the container.
@@ -50,6 +50,8 @@ namespace MyShop
 
             // Đăng ký UserService vào Dependency Injection (DI)
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IFlowerService, FlowerService>();
+
 
             // Configure JWT Authentication
             var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
