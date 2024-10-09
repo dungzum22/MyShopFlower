@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MyShop.DataContext;
-using MyShop.Entities;
-using MyShop.Services;
+using MyShop.Services.Flowers;
 
 namespace MyShop.Controllers
 {
@@ -11,47 +9,30 @@ namespace MyShop.Controllers
     public class SearchController : ControllerBase
     {
         private readonly FlowershopContext _context;
-        private readonly SearchService _searchService;
+        private readonly ISearchService _searchService;
 
-        public SearchController(FlowershopContext context, SearchService searchService)
+        // Constructor injection for context and search service
+        public SearchController(FlowershopContext context, ISearchService searchService) // Changed to interface
         {
             _context = context;
             _searchService = searchService;
         }
 
-
-        //[HttpGet("{categoryId}/flowers")]
-        //public IActionResult GetFlowersByCategory(int categoryId)
-        //{
-        //    // Fetch flowers that belong to the given categoryId
-        //    var flowers = _catagoryService.GetFlowersByCategoryId(categoryId);
-
-        //    if (flowers == null || !flowers.Any())
-        //    {
-        //        return NotFound(new { message = "No flowers found for this category." });
-        //    }
-
-        //    // Return the list of flowers
-        //    return Ok(flowers);
-        //}
-
+        // GET api/search/Search/{name}
         [HttpGet("Search/{name}")]
-        public IActionResult Seach(string name)
+        public IActionResult Search(string name)
         {
-            // Fetch the flower by ID
-            var flower = _searchService.SearchFlowers(name);
+            // Fetch flowers matching the search query (name)
+            var flowers = _searchService.SearchFlowers(name);
 
-            if (flower == null)
+            // Check if no flowers were found
+            if (!flowers.Any())
             {
-                return NotFound(new { message = "Flower not found" });
+                return NotFound(new { message = "No flowers found matching the search criteria." });
             }
 
-            // Return flower information
-            return Ok(new
-            {
-               flower
-            });
+            // Return the list of flowers
+            return Ok(flowers);
         }
-
     }
 }

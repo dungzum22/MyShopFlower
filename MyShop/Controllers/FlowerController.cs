@@ -8,18 +8,18 @@ using MyShop.Services.Flowers;
 public class FlowerInfoController : ControllerBase
 {
     private readonly FlowershopContext _context;
-    private readonly FlowerService _flowerService;
+    private readonly IFlowerService _flowerService;
 
     // Constructor injection for both context and flower service
-    public FlowerInfoController(FlowershopContext context, FlowerService flowerService)
+    public FlowerInfoController(FlowershopContext context, IFlowerService flowerService)
     {
         _context = context;
         _flowerService = flowerService;
     }
 
-    // POST api/flowerinfo
+    // POST api/flowerinfo/Create
     [HttpPost("Create")]
-    public IActionResult CreateFlower([FromForm] string flowername, [FromForm] string flowerdiscrpt, [FromForm] decimal price, [FromForm] int quantity, [FromForm] int catagory)
+    public IActionResult CreateFlower([FromForm] string flowername, [FromForm] string flowerdiscrpt, [FromForm] decimal price, [FromForm] int quantity, [FromForm] int category)
     {
         // Create a new flower
         var newFlower = new FlowerInfo
@@ -28,10 +28,11 @@ public class FlowerInfoController : ControllerBase
             FlowerDescription = flowerdiscrpt,
             Price = price,
             CreatedAt = DateTime.UtcNow,
-            CategoryId = catagory,
+            CategoryId = category,
             AvailableQuantity = quantity,
         };
 
+        // Save the new flower to the database
         var createdFlower = _flowerService.CreateFlower(newFlower);
 
         // Return the created flower information
@@ -47,7 +48,7 @@ public class FlowerInfoController : ControllerBase
         });
     }
 
-    // GET api/flowerinfo/{id}
+    // GET api/flowerinfo/Search/{id}
     [HttpGet("Search/{id}")]
     public IActionResult GetFlower(int id)
     {
@@ -71,30 +72,7 @@ public class FlowerInfoController : ControllerBase
         });
     }
 
-    //[HttpPost("Update/{id}")]
-    //public IActionResult UpdateFlower(int id, [FromForm] string flowername, [FromForm] string flowerdiscrpt, [FromForm] decimal price, [FromForm] int quantity)
-    //{
-    //    // Fetch the flower by ID
-    //    var flower = _flowerService.GetFlowerById(id);
-
-    //    if (flower == null)
-    //    {
-    //        return NotFound(new { message = "Flower not found" });
-    //    }
-
-    //    // Update the flower properties with new values
-    //    flower.FlowerName = flowername;
-    //    flower.FlowerDescription = flowerdiscrpt;
-    //    flower.Price = price;
-    //    flower.AvailableQuantity = quantity;
-
-    //    // Save the updated flower in the database (this method should be in your service/repository layer)
-    //    _flowerService.UpdateFlower(flower);
-
-    //    // Return a success response
-    //    return Ok(new { message = "Flower updated successfully" });
-    //}
-
+    // POST api/flowerinfo/Update/{id}
     [HttpPost("Update/{id}")]
     public IActionResult UpdateFlower(int id, [FromForm] string? flowername, [FromForm] string? flowerdiscrpt, [FromForm] decimal? price, [FromForm] int? quantity)
     {
@@ -112,15 +90,10 @@ public class FlowerInfoController : ControllerBase
         flower.Price = price.HasValue ? price.Value : flower.Price;
         flower.AvailableQuantity = quantity.HasValue ? quantity.Value : flower.AvailableQuantity;
 
-        // Save the updated flower in the database (this method should be in your service/repository layer)
+        // Save the updated flower in the database
         _flowerService.UpdateFlower(flower);
 
         // Return a success response
         return Ok(new { message = "Flower updated successfully" });
     }
-
-
-
-
-
 }

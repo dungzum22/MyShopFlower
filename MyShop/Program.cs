@@ -3,12 +3,13 @@
 //using Microsoft.IdentityModel.Tokens;
 //using Microsoft.OpenApi.Models;
 //using MyShop.DataContext;
-//using MyShop.Services;
 //using MyShop.Services.Flowers;
 //using MyShop.Services.Users;
 //using MyShop.Filters;
-//using MyShop.Services;
 //using System.Text;
+//using Microsoft.AspNetCore.Authentication.Cookies;
+//using Microsoft.AspNetCore.Authentication.Google;
+//using MyShop.Services.ApplicationDbContext;
 
 //namespace MyShop
 //{
@@ -22,10 +23,44 @@
 //            builder.Services.AddControllers();
 //            builder.Services.AddEndpointsApiExplorer();
 //            builder.Services.AddSwaggerGen();
-//            builder.Services.AddScoped<FlowerService>();
-//            builder.Services.AddScoped<CategoryService>();
 //            builder.Services.AddScoped<SearchService>();
+//            // Đăng ký ApplicationDbContext trong dependency injection container
+//            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+//            builder.Services.AddControllers();
+//            builder.Services.AddAuthentication(options =>
+//            {
+//                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+//                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+//            })
+//            .AddGoogle(options =>
+//            {
+//                options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+//                options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+//            })
+//            .AddCookie();
+//            builder.Services.AddAuthorization();
+
+//            // Cấu hình CORS cho phép bất kỳ nguồn gốc nào (hoặc cụ thể)
+//            builder.Services.AddCors(options =>
+//            {
+//                options.AddPolicy("AllowAll", builder =>
+//                {
+//                    builder.AllowAnyOrigin()
+//                           .AllowAnyMethod()
+//                           .AllowAnyHeader();
+//                });
+//            });
+
+//            builder.Services.AddControllers();
+//            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+//            var app = builder.Build();
+
+//            // Sử dụng CORS trong ứng dụng
+//            app.UseCors("AllowAll");
 
 //            //Đăng ký DbContext để kết nối với cơ sở dữ liệu
 //            builder.Services.AddDbContext<FlowershopContext>(options =>
@@ -36,14 +71,11 @@
 //            // Đăng ký UserService vào Dependency Injection (DI)
 //            builder.Services.AddScoped<IUserService, UserService>();
 
-
+//            builder.Services.AddScoped<FlowerService>();
+//            builder.Services.AddScoped<CategoryService>();
 
 //            // Cấu hình JWT Authentication
 //            var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
-
-//            //// Configure JWT Authentication
-//            //var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
-
 //            builder.Services.AddAuthentication(options =>
 //            {
 //                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -107,7 +139,7 @@
 //                });
 //            });
 
-//            var app = builder.Build();
+
 
 //            // Configure the HTTP request pipeline.
 //            if (app.Environment.IsDevelopment())
@@ -135,16 +167,19 @@
 //        }
 //    }
 //}
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MyShop.DataContext;
-using MyShop.Filters;
-using MyShop.Services;
 using MyShop.Services.Flowers;
 using MyShop.Services.Users;
+using MyShop.Filters;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using MyShop.Services.ApplicationDbContext;
 
 namespace MyShop
 {
@@ -157,22 +192,36 @@ namespace MyShop
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddScoped<FlowerService>();
-            builder.Services.AddScoped<CategoryService>();
-            builder.Services.AddScoped<SearchService>();
 
-            //Đăng ký DbContext để kết nối với cơ sở dữ liệu
+            // Đăng ký ApplicationDbContext trong dependency injection container
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Đăng ký FlowershopContext
             builder.Services.AddDbContext<FlowershopContext>(options =>
-            {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Đăng ký UserService vào Dependency Injection (DI)
+            // Đăng ký các service
+            builder.Services.AddScoped<ISearchService, SearchService>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IFlowerService, FlowerService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-            // Configure JWT Authentication
-            var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]);
+            // Cấu hình Google Authentication và Cookie Authentication
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+            })
+            .AddGoogle(options =>
+            {
+                options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+                options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+            })
+            .AddCookie();
+
+            // Cấu hình JWT Authentication
+            var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -191,13 +240,20 @@ namespace MyShop
                 };
             });
 
+            // Cấu hình CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllOrigins", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
 
-
+            // Cấu hình Swagger
             builder.Services.AddSwaggerGen(c =>
             {
-                // Các cấu hình Swagger khác
-
-                // Thêm bộ lọc để loại bỏ các trường không mong muốn
                 c.OperationFilter<RemoveUnusedFieldsOperationFilter>();
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
@@ -224,43 +280,28 @@ namespace MyShop
                 });
             });
 
-
-            //Add CORS setup to get API
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAllOrigins", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                    .AllowAnyHeader()
-                    .AllowAnyMethod();
-                });
-            });
-
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            // Cấu hình môi trường phát triển
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
+            // Cấu hình middleware
             app.UseHttpsRedirection();
-            // Cho phép phục vụ các file tĩnh (như hình ảnh) từ thư mục wwwroot
-            app.UseStaticFiles();  // Thêm dòng này để cho phép phục vụ file tĩnh
+            app.UseStaticFiles(); // Cho phép phục vụ các file tĩnh như hình ảnh từ wwwroot
 
-            //user CORS
             app.UseCors("AllowAllOrigins");
 
-            // Kích hoạt Authentication và Authorization middleware
             app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();
 
             app.Run();
-
-
         }
     }
 }
+

@@ -10,12 +10,12 @@ namespace MyShop.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly FlowershopContext _context;
-        private readonly CategoryService _catagoryService;
+        private readonly ICategoryService _categoryService; // Correct spelling and added interface
 
-        public CategoryController(FlowershopContext context, CategoryService categoryService)
+        public CategoryController(FlowershopContext context, ICategoryService categoryService) // Use interface here
         {
             _context = context;
-            _catagoryService = categoryService;
+            _categoryService = categoryService;
         }
 
         // GET api/category/{categoryId}/flowers
@@ -23,7 +23,7 @@ namespace MyShop.Controllers
         public IActionResult GetFlowersByCategory(int categoryId)
         {
             // Fetch flowers that belong to the given categoryId
-            var flowers = _catagoryService.GetFlowersByCategoryId(categoryId);
+            var flowers = _categoryService.GetFlowersByCategoryId(categoryId);
 
             if (flowers == null || !flowers.Any())
             {

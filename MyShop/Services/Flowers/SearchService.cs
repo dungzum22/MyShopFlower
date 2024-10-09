@@ -1,9 +1,9 @@
 ﻿using MyShop.DataContext;
 using MyShop.Entities;
 
-namespace MyShop.Services
+namespace MyShop.Services.Flowers
 {
-    public class SearchService
+    public class SearchService : ISearchService
     {
         private readonly FlowershopContext _context;
 
