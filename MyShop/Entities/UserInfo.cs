@@ -25,13 +25,11 @@ public partial class UserInfo
 
     public DateTime? UpdatedDate { get; set; }
 
-    public int? CreatedBy { get; set; }
-
-    public int? UpdatedBy { get; set; }
-
     public int? Points { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
     public virtual User? User { get; set; }
+
+    public virtual ICollection<UserVoucherStatus> UserVoucherStatuses { get; set; } = new List<UserVoucherStatus>();
 }
