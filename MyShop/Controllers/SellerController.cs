@@ -72,6 +72,15 @@ namespace MyShop.Controllers
                     userInfo.IsSeller = true;
                     _context.UserInfos.Update(userInfo);
                 }
+                // Cập nhật thông tin trong bảng Users để thay đổi type thành 'seller'
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+                if (user != null)
+                {
+                    user.Type = "seller";
+                    _context.Users.Update(user);
+                }
+
+
 
                 await _context.SaveChangesAsync();
 
@@ -81,7 +90,7 @@ namespace MyShop.Controllers
             {
                 // Log lỗi nếu có lỗi bất ngờ xảy ra
                 _logger.LogError(ex, "An error occurred while registering as a seller.");
-                return StatusCode(500, "Có lỗi xảy ra khi đăng ký làm seller.");
+                return StatusCode(500, $"Có lỗi xảy ra khi đăng ký làm seller. {ex}");
             }
         }
     }
