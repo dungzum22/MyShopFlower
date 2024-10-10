@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.Services.ApplicationDbContext;
 using MyShop.Entities;
-using MyShop.Services.ApplicationDbContext;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,10 +22,12 @@ namespace GoogleLogin.Controller
         }
 
         // Bắt đầu quá trình đăng nhập với Google
-        [HttpGet("signin-goole")]
+        [HttpGet("signin-google")]
         public IActionResult Login()
         {
-            var properties = new AuthenticationProperties { RedirectUri = "/api/logingoogle/callback" };
+            //var properties = new AuthenticationProperties { RedirectUri = "api/LoginGoogle/signin-google" };
+            var properties = new AuthenticationProperties { RedirectUri = "https://localhost:7198/api/LoginGoogle/callback" };
+
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
 

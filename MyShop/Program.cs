@@ -208,17 +208,37 @@ namespace MyShop
             builder.Services.AddScoped<ICategoryService, CategoryService>();
 
             // Cấu hình Google Authentication và Cookie Authentication
+            //builder.Services.AddAuthentication(options =>
+            //{
+            //    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            //    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+            //})
+            //.AddGoogle(options =>
+            //{
+            //    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+            //    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+            //})
+            //.AddCookie();
+            //-------------------------------
             builder.Services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
             })
-            .AddGoogle(options =>
-            {
-                options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
-                options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-            })
-            .AddCookie();
+ .AddCookie(options =>
+ {
+     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+     options.Cookie.HttpOnly = true;
+     options.Cookie.SameSite = SameSiteMode.Lax;
+ })
+ .AddGoogle(options =>
+ {
+     options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+     options.CallbackPath = "/api/LoginGoogle/callback";
+ });
+
+            //------------------------------
 
             // Cấu hình JWT Authentication
             var key = Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]);
