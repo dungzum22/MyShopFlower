@@ -19,6 +19,8 @@ public partial class OrdersDetail
 
     public int Amount { get; set; }
 
+    public decimal TotalPrice { get; set; }
+
     public int? UserVoucherStatusId { get; set; }
 
     public string? Status { get; set; }

@@ -32,4 +32,6 @@ public partial class Seller
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
     public virtual User User { get; set; } = null!;
+
+    public virtual ICollection<UserVoucherStatus> UserVoucherStatuses { get; set; } = new List<UserVoucherStatus>();
 }
