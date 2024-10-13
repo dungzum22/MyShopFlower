@@ -180,6 +180,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using MyShop.Services.ApplicationDbContext;
+using Amazon.S3;
 
 namespace MyShop
 {
@@ -188,6 +189,25 @@ namespace MyShop
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            // Đọc thông tin AWS từ appsettings.json
+            var accessKey = builder.Configuration["AWS:AccessKey"];
+            var secretKey = builder.Configuration["AWS:SecretKey"];
+            var region = builder.Configuration["AWS:Region"];
+
+            if (string.IsNullOrEmpty(accessKey) || string.IsNullOrEmpty(secretKey) || string.IsNullOrEmpty(region))
+            {
+                throw new Exception("AWS credentials or region are missing in appsettings.json");
+            }
+
+            var awsCredentials = new Amazon.Runtime.BasicAWSCredentials(accessKey, secretKey);
+            var s3Client = new AmazonS3Client(awsCredentials, Amazon.RegionEndpoint.GetBySystemName(region));
+
+            // Đăng ký IAmazonS3
+            builder.Services.AddSingleton<IAmazonS3>(s3Client);
+
+            //Đăng ký S3StorageService
+            builder.Services.AddSingleton<S3StorageService>();
 
             // Add services to the container.
             builder.Services.AddControllers();
