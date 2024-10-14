@@ -10,13 +10,16 @@ public class S3StorageService
     private readonly IAmazonS3 _s3Client;
     private const string BucketName = "flower-shopz";
 
+    
     public S3StorageService(IAmazonS3 s3Client)
     {
-        _s3Client = s3Client;
+        _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
     }
+
 
     public async Task<string> UploadFileAsync(Stream inputStream, string fileName, bool isPublic = true)
     {
+        var filePath = $"flower-img/{fileName}";
         // Xác định contentType dựa vào phần mở rộng của file
         string contentType = MimeUtility.GetMimeMapping(fileName);
 

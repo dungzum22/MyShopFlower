@@ -1,4 +1,5 @@
-﻿using MyShop.DataContext;
+﻿using Microsoft.EntityFrameworkCore;
+using MyShop.DataContext;
 using MyShop.Entities;
 
 namespace MyShop.Services.Flowers
@@ -12,37 +13,44 @@ namespace MyShop.Services.Flowers
             _context = context;
         }
 
+       
 
-
-        public FlowerInfo CreateFlower(FlowerInfo flower)
+        public async Task<FlowerInfo> CreateFlower(FlowerInfo flower)
         {
-
-            _context.FlowerInfos.Add(flower);
-            _context.SaveChanges();
-
+            // Add the new flower to the context
+            await _context.FlowerInfos.AddAsync(flower);
+            // Save changes to the database
+            await _context.SaveChangesAsync();
+            // Return the created flower
             return flower;
         }
 
-        public FlowerInfo GetFlowerById(int id)
+        public async Task<FlowerInfo> GetFlowerById(int id)
         {
-            return _context.FlowerInfos.Find(id);
+            return await _context.FlowerInfos.FindAsync(id);
         }
 
-
-
-        public FlowerInfo UpdateFlower(FlowerInfo flower)
+        public async Task<IEnumerable<FlowerInfo>> GetAllFlowers()
         {
-            _context.FlowerInfos.Update(flower);
-            _context.SaveChanges();
+            return await _context.FlowerInfos.ToListAsync();
+        }
 
+        public async Task<FlowerInfo> UpdateFlower(FlowerInfo flower)
+        {
+            _context.Entry(flower).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
             return flower;
         }
 
+        public async Task<bool> DeleteFlower(int id)
+        {
+            var flower = await _context.FlowerInfos.FindAsync(id);
+            if (flower == null) return false;
 
-
-
-
-
+            _context.FlowerInfos.Remove(flower);
+            await _context.SaveChangesAsync();
+            return true;
+        }
 
 
     }

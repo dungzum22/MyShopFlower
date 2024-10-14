@@ -15,15 +15,59 @@ public class FlowerInfoController : ControllerBase
     private readonly ILogger<FlowerInfoController> _logger;
 
     // Constructor injection for both context and flower service
-    public FlowerInfoController(FlowershopContext context, IFlowerService flowerService)
+    //public FlowerInfoController(FlowershopContext context, IFlowerService flowerService)
+    //{
+    //    _context = context;
+    //    _flowerService = flowerService;
+    //}
+    public FlowerInfoController(
+    FlowershopContext context,
+    IFlowerService flowerService,
+    S3StorageService s3StorageService, // Add this line
+    ILogger<FlowerInfoController> logger // Add logger to the constructor
+)
     {
         _context = context;
         _flowerService = flowerService;
+        _s3StorageService = s3StorageService; // Initialize the injected service
+        _logger = logger; // Initialize logger
     }
 
+
     // POST api/flowerinfo/Create
+    //[HttpPost("Create")]
+    //public IActionResult CreateFlower([FromForm] string flowername, [FromForm] string flowerdiscrpt, [FromForm] decimal price, [FromForm] int quantity, [FromForm] int category)
+    //{
+    //    // Create a new flower
+    //    var newFlower = new FlowerInfo
+    //    {
+    //        FlowerName = flowername,
+    //        FlowerDescription = flowerdiscrpt,
+    //        Price = price,
+    //        CreatedAt = DateTime.UtcNow,
+    //        CategoryId = category,
+    //        AvailableQuantity = quantity,
+    //    };
+
+    //    // Save the new flower to the database
+    //    var createdFlower = _flowerService.CreateFlower(newFlower);
+
+    //    // Return the created flower information
+    //    return Ok(new
+    //    {
+    //        FlowerID = createdFlower.FlowerId,
+    //        FlowerName = createdFlower.FlowerName,
+    //        FlowerDescription = createdFlower.FlowerDescription,
+    //        Price = createdFlower.Price,
+    //        AvailableQuantity = createdFlower.AvailableQuantity,
+    //        CategoryID = createdFlower.CategoryId,
+    //        message = "Flower created successfully"
+    //    });
+    //}
+
     [HttpPost("Create")]
-    public IActionResult CreateFlower([FromForm] string flowername, [FromForm] string flowerdiscrpt, [FromForm] decimal price, [FromForm] int quantity, [FromForm] int category)
+    public async Task<IActionResult> CreateFlower([FromForm] string flowername, [FromForm] string flowerdiscrpt,
+    [FromForm] decimal price, [FromForm] int quantity, [FromForm] int category, [FromForm] IFormFile? image)
     {
         // Create a new flower
         var newFlower = new FlowerInfo
@@ -36,8 +80,31 @@ public class FlowerInfoController : ControllerBase
             AvailableQuantity = quantity,
         };
 
+        // If an image is uploaded, handle the upload to S3
+        if (image != null && image.Length > 0)
+        {
+            try
+            {
+                // Generate a unique file name for the image
+                var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(image.FileName)}";
+
+                using (var stream = image.OpenReadStream())
+                {
+                    // Upload the file to S3 and get the image URL
+                    var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
+                    newFlower.ImageUrl = imageUrl; // Save the image URL in the flower object
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error and return a response
+                _logger.LogError(ex, "Error uploading image to S3.");
+                return StatusCode(500, "Error uploading image.");
+            }
+        }
+
         // Save the new flower to the database
-        var createdFlower = _flowerService.CreateFlower(newFlower);
+        var createdFlower = await _flowerService.CreateFlower(newFlower); // Make sure CreateFlower returns a Task<FlowerInfo>
 
         // Return the created flower information
         return Ok(new
@@ -48,33 +115,15 @@ public class FlowerInfoController : ControllerBase
             Price = createdFlower.Price,
             AvailableQuantity = createdFlower.AvailableQuantity,
             CategoryID = createdFlower.CategoryId,
+            ImageUrl = createdFlower.ImageUrl, // Include the image URL in the response
             message = "Flower created successfully"
         });
     }
 
-    // GET api/flowerinfo/Search/{id}
-    //[HttpGet("Search/{id}")]
-    //public IActionResult GetFlower(int id)
-    //{
-    //    // Fetch the flower by ID
-    //    var flower = _flowerService.GetFlowerById(id);
 
-    //    if (flower == null)
-    //    {
-    //        return NotFound(new { message = "Flower not found" });
-    //    }
 
-    //    // Return flower information
-    //    return Ok(new
-    //    {
-    //        FlowerID = flower.FlowerId,
-    //        FlowerName = flower.FlowerName,
-    //        FlowerDescription = flower.FlowerDescription,
-    //        Price = flower.Price,
-    //        AvailableQuantity = flower.AvailableQuantity,
-    //        CategoryID = flower.CategoryId
-    //    });
-    //}
+
+
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetFlower(int id)
@@ -125,8 +174,8 @@ public class FlowerInfoController : ControllerBase
     //    return Ok(new { message = "Flower updated successfully" });
     //}
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateFlower(int id, [FromForm] UpdateFlowerDto flowerDto)
+    [HttpPut("update{id}")]
+    public async Task<IActionResult> UpdateFlower(int id, [FromForm] FlowerDto flowerDto)
     {
         // Tìm FlowerInfo dựa trên flower_id
         var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
@@ -146,7 +195,7 @@ public class FlowerInfoController : ControllerBase
         if (flowerDto.Image != null && flowerDto.Image.Length > 0)
         {
             var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
-
+            var filePath = $"flower-img/{fileName}";
             try
             {
                 using (var stream = flowerDto.Image.OpenReadStream())
@@ -160,7 +209,7 @@ public class FlowerInfoController : ControllerBase
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Có lỗi xảy ra khi tải ảnh lên S3.");
-                return StatusCode(500, "Có lỗi xảy ra khi tải ảnh lên.");
+                return StatusCode(500, $"{ex}Có lỗi xảy ra khi tải ảnh lên.");
             }
         }
 

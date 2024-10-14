@@ -4,8 +4,10 @@ namespace MyShop.Services.Flowers
 {
     public interface IFlowerService
     {
-        FlowerInfo CreateFlower(FlowerInfo flower);
-        FlowerInfo GetFlowerById(int id);
-        FlowerInfo UpdateFlower(FlowerInfo flower);
+        Task<FlowerInfo> CreateFlower(FlowerInfo flower);
+        Task<FlowerInfo> GetFlowerById(int id);
+        Task<IEnumerable<FlowerInfo>> GetAllFlowers();
+        Task<FlowerInfo> UpdateFlower(FlowerInfo flower);
+        Task<bool> DeleteFlower(int id);
     }
 }
