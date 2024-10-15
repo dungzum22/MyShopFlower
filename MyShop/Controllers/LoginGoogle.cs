@@ -22,11 +22,11 @@ namespace GoogleLogin.Controller
         }
 
         // Bắt đầu quá trình đăng nhập với Google
-        [HttpGet("signin-google")]
+        [HttpGet("login-google")]
         public IActionResult Login()
         {
-            //var properties = new AuthenticationProperties { RedirectUri = "api/LoginGoogle/signin-google" };
-            var properties = new AuthenticationProperties { RedirectUri = "https://localhost:7198/api/LoginGoogle/callback" };
+            var properties = new AuthenticationProperties { RedirectUri = "/api/LoginGoogle/callback" };
+            //var properties = new AuthenticationProperties { RedirectUri = "https://localhost:7198/api/LoginGoogle/callback" };
 
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }

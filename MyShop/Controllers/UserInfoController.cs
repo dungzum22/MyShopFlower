@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyShop.DataContext;
 using MyShop.DTO;
-using MyShop.Entities;
 using Org.BouncyCastle.Utilities;
 using System.IO;
 using System.Linq;

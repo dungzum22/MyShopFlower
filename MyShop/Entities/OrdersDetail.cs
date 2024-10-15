@@ -9,6 +9,8 @@ public partial class OrdersDetail
 
     public int? OrderId { get; set; }
 
+    public int? SellerId { get; set; }
+
     public string? FlowerName { get; set; }
 
     public int? FlowerId { get; set; }
@@ -17,13 +19,21 @@ public partial class OrdersDetail
 
     public int Amount { get; set; }
 
+    public int? UserVoucherStatusId { get; set; }
+
     public string? Status { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
-    public double? Voucher { get; set; }
+    public int? AddressId { get; set; }
+
+    public virtual Address? Address { get; set; }
 
     public virtual FlowerInfo? Flower { get; set; }
 
     public virtual Order? Order { get; set; }
+
+    public virtual Seller? Seller { get; set; }
+
+    public virtual UserVoucherStatus? UserVoucherStatus { get; set; }
 }

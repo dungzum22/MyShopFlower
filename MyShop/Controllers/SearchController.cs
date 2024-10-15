@@ -18,6 +18,8 @@ namespace MyShop.Controllers
             _searchService = searchService;
         }
 
+
+
         // GET api/search/Search/{name}
         [HttpGet("Search/{name}")]
         public IActionResult Search(string name)

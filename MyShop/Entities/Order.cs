@@ -9,17 +9,19 @@ public partial class Order
 
     public string? FlowerName { get; set; }
 
+    public int? SellerId { get; set; }
+
     public decimal Price { get; set; }
 
     public int Quantity { get; set; }
 
     public int? UserId { get; set; }
 
-    public int? PhoneNumber { get; set; }
-
-    public string ShippingAddress { get; set; } = null!;
+    public string? PhoneNumber { get; set; }
 
     public string PaymentMethod { get; set; } = null!;
+
+    public string? TransactionId { get; set; }
 
     public string DeliveryMethod { get; set; } = null!;
 
@@ -27,7 +29,21 @@ public partial class Order
 
     public DateTime? CreatedDate { get; set; }
 
+    public int? UserVoucherStatusId { get; set; }
+
+    public int? AddressId { get; set; }
+
+    public int? CartId { get; set; }
+
+    public virtual Address? Address { get; set; }
+
+    public virtual Cart? Cart { get; set; }
+
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
 
+    public virtual Seller? Seller { get; set; }
+
     public virtual User? User { get; set; }
+
+    public virtual UserVoucherStatus? UserVoucherStatus { get; set; }
 }

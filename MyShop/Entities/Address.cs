@@ -11,5 +11,9 @@ public partial class Address
 
     public string? Description { get; set; }
 
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
+    public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
+
     public virtual UserInfo? UserInfo { get; set; }
 }

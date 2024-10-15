@@ -71,12 +71,20 @@ namespace MyShop
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.IsEssential = true;
             })
             .AddGoogle(options =>
             {
                 options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
                 options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
                 options.CallbackPath = "/api/LoginGoogle/callback";
+            });
+            builder.Services.AddDistributedMemoryCache();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
             });
 
             // Cấu hình JWT Authentication
@@ -159,6 +167,8 @@ namespace MyShop
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseSession();
+
 
             app.MapControllers();
 
