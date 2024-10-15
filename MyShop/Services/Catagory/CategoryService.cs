@@ -2,7 +2,7 @@
 using MyShop.Entities;
 
 
-public class CategoryService
+public class CategoryService : ICategoryService
 {
     private readonly FlowershopContext _context;
 
@@ -17,4 +17,16 @@ public class CategoryService
         // Query to get flowers by category ID
         return _context.FlowerInfos.Where(f => f.CategoryId == categoryId).ToList();
     }
+
+    // Method to create a new category
+    public async Task<Category> CreateCategoryAsync(Category category)
+    {
+        _context.Categories.Add(category);
+        await _context.SaveChangesAsync();
+        return category;
+    }
+
+
+
+
 }

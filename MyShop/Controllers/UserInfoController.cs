@@ -114,13 +114,14 @@ namespace MyShop.Controllers
             if (userInfoDto.Avatar != null && userInfoDto.Avatar.Length > 0)
             {
                 var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(userInfoDto.Avatar.FileName)}";
+                var filePath = $"user-info/{fileName}"; // Thêm prefix user-info vào tên file
 
                 try
                 {
                     using (var stream = userInfoDto.Avatar.OpenReadStream())
                     {
                         // Upload file lên S3 và lấy URL
-                        var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
+                        var imageUrl = await _s3StorageService.UploadFileAsync(stream, filePath);
                         // Cập nhật đường dẫn ảnh vào cơ sở dữ liệu
                         userInfo.Avatar = imageUrl;
                     }
@@ -196,13 +197,14 @@ namespace MyShop.Controllers
             if (createUserInfoDto.Avatar != null && createUserInfoDto.Avatar.Length > 0)
             {
                 var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(createUserInfoDto.Avatar.FileName)}";
+                var filePath = $"user-info/{fileName}"; // Thêm prefix user-info vào tên file
 
                 try
                 {
                     using (var stream = createUserInfoDto.Avatar.OpenReadStream())
                     {
                         // Upload file lên S3 và lấy URL
-                        var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
+                        var imageUrl = await _s3StorageService.UploadFileAsync(stream, filePath);
                         // Cập nhật đường dẫn ảnh vào cơ sở dữ liệu
                         newUserInfo.Avatar = imageUrl;
                     }

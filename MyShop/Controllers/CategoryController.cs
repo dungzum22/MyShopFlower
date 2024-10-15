@@ -1,21 +1,59 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MyShop.DataContext;
+using MyShop.DTO;
+using MyShop.Entities;
 using MyShop.Services.Flowers;
 using System.Linq;
+using System.Security.Claims;
 
 namespace MyShop.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class CategoryController : ControllerBase
     {
         private readonly FlowershopContext _context;
-        private readonly CategoryService _catagoryService;
+        private readonly ICategoryService _categoryService; // Correct spelling and added interface
 
-        public CategoryController(FlowershopContext context, CategoryService categoryService)
+        public CategoryController(FlowershopContext context, ICategoryService categoryService) // Use interface here
         {
             _context = context;
-            _catagoryService = categoryService;
+            _categoryService = categoryService;
+        }
+
+
+        [HttpPost("CreateCategory")]
+        [Authorize(Roles = "admin")] // Only admins can access this route
+        public async Task<IActionResult> CreateCategory([FromForm] CreateCategoryDto categoryDto)
+        {
+            // Check if the user is an admin
+            var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+            if (userRole != "admin")
+            {
+                return Forbid("Bạn không có quyền truy cập thông tin này."); // Forbidden response for non-admins
+            }
+
+            if (string.IsNullOrWhiteSpace(categoryDto.CategoryName))
+            {
+                return BadRequest(new { message = "Category name is required." });
+            }
+
+            var newCategory = new Category
+            {
+                CategoryName = categoryDto.CategoryName
+            };
+
+            var createdCategory = await _categoryService.CreateCategoryAsync(newCategory);
+
+            return CreatedAtAction(nameof(GetFlowersByCategory), new { categoryId = createdCategory.CategoryId }, new
+            {
+                CategoryId = createdCategory.CategoryId,
+                CategoryName = createdCategory.CategoryName,
+                message = "Category created successfully"
+            });
         }
 
         // GET api/category/{categoryId}/flowers
@@ -23,7 +61,7 @@ namespace MyShop.Controllers
         public IActionResult GetFlowersByCategory(int categoryId)
         {
             // Fetch flowers that belong to the given categoryId
-            var flowers = _catagoryService.GetFlowersByCategoryId(categoryId);
+            var flowers = _categoryService.GetFlowersByCategoryId(categoryId);
 
             if (flowers == null || !flowers.Any())
             {
@@ -33,5 +71,8 @@ namespace MyShop.Controllers
             // Return the list of flowers
             return Ok(flowers);
         }
+
+
+
     }
 }

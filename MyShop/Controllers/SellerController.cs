@@ -57,6 +57,7 @@ namespace MyShop.Controllers
                     UserId = userId,
                     ShopName = sellerDto.ShopName,
                     Introduction = sellerDto.Introduction,
+                    AddressSeller = sellerDto.AddressSeller,
                     Role = sellerDto.Role,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow

@@ -15,6 +15,25 @@ public class S3StorageService
         _s3Client = s3Client;
     }
 
+    public async Task<string> GetPresignedUrlAsync(string key)
+    {
+        try
+        {
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = BucketName,
+                Key = key,
+                Expires = DateTime.UtcNow.AddMinutes(30) // URL có hiệu lực trong 30 phút
+            };
+            var url = _s3Client.GetPreSignedURL(request);
+            return url;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Có lỗi khi tạo pre-signed URL cho hình ảnh: {ex.Message}");
+        }
+    }
+
     public async Task<string> UploadFileAsync(Stream inputStream, string fileName, bool isPublic = true)
     {
         // Xác định contentType dựa vào phần mở rộng của file
