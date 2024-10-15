@@ -17,6 +17,8 @@ public partial class Seller
 
     public DateTime? UpdatedAt { get; set; }
 
+    public string? AddressSeller { get; set; }
+
     public int? TotalProduct { get; set; }
 
     public string Role { get; set; } = null!;
@@ -24,6 +26,8 @@ public partial class Seller
     public string? Introduction { get; set; }
 
     public int? Quantity { get; set; }
+
+    public virtual ICollection<FlowerInfo> FlowerInfos { get; set; } = new List<FlowerInfo>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 

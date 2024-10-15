@@ -15,8 +15,6 @@ public partial class Order
 
     public int Quantity { get; set; }
 
-    public decimal TotalPrice { get; set; }
-
     public int? UserId { get; set; }
 
     public string? PhoneNumber { get; set; }

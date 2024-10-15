@@ -9,6 +9,7 @@ using MyShop.Filters;
 using MyShop.Services;
 using System.Text;
 using Amazon.S3;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MyShop
 {
@@ -41,6 +42,11 @@ namespace MyShop
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            // Đăng ký các service
+            builder.Services.AddScoped<ISearchService, SearchService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IFlowerService, FlowerService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
 
             // Đăng ký DbContext để kết nối với cơ sở dữ liệu
             builder.Services.AddDbContext<FlowershopContext>(options =>
@@ -51,6 +57,24 @@ namespace MyShop
             // Đăng ký UserService vào Dependency Injection (DI)
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFlowerService, FlowerService>();
+            // Đăng ký IHttpClientFactory để sử dụng HttpClient
+            builder.Services.AddHttpClient();
+
+            var configuration = builder.Configuration;
+
+
+
+            // Đăng ký IHttpClientFactory để sử dụng HttpClient
+            builder.Services.AddHttpClient();
+
+            // Sử dụng MockGHNService cho IGHNService để thử nghiệm
+            builder.Services.AddScoped<IGHNService, MockGHNService>();
+
+            // Đăng ký VNPayService vào Dependency Injection (DI)
+            builder.Services.AddScoped<IVNPayService, VNPayService>();
+
+
+            
 
 
             // Configure JWT Authentication
