@@ -11,8 +11,6 @@ public partial class OrdersDetail
 
     public int? SellerId { get; set; }
 
-    public string? FlowerName { get; set; }
-
     public int? FlowerId { get; set; }
 
     public decimal Price { get; set; }
@@ -26,6 +24,8 @@ public partial class OrdersDetail
     public DateTime? CreatedAt { get; set; }
 
     public int? AddressId { get; set; }
+
+    public string DeliveryMethod { get; set; } = null!;
 
     public virtual Address? Address { get; set; }
 
