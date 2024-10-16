@@ -53,13 +53,13 @@ namespace MyShop
             builder.Services.AddScoped<IFlowerService, FlowerService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-            // Đăng ký DbContext để kết nối với cơ sở dữ liệu
+            //Đăng ký DbContext để kết nối với cơ sở dữ liệu
             builder.Services.AddDbContext<FlowershopContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            // Đăng ký UserService vào Dependency Injection (DI)
+            //Đăng ký UserService vào Dependency Injection(DI)
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFlowerService, FlowerService>();
             //Đăng ký IHttpClientFactory để sử dụng HttpClient
@@ -74,7 +74,7 @@ namespace MyShop
             builder.Services.AddScoped<IGHNService, MockGHNService>();
 
             // Đăng ký VNPayService vào Dependency Injection (DI)
-            builder.Services.AddScoped<IVNPayService, VNPayService>();
+            //builder.Services.AddScoped<IVNPayService, VNPayService>();
 
 
 

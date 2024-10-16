@@ -7,6 +7,8 @@ public partial class FlowerInfo
 {
     public int FlowerId { get; set; }
 
+    public string FlowerName { get; set; } = null!;
+
     public string? FlowerDescription { get; set; }
 
     public decimal Price { get; set; }
