@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+//[Authorize]
 public class FlowerInfoController : ControllerBase
 {
     private readonly FlowershopContext _context;
@@ -34,85 +34,14 @@ public class FlowerInfoController : ControllerBase
 
 
 
-    //// POST api/flowerinfo/Create
-    //[HttpPost("Create")]
-    //public async Task<IActionResult> CreateFlower([FromForm] FlowerDto flowerDto)
-    //{
-    //    // Validate the input
-    //    if (string.IsNullOrWhiteSpace(flowerDto.FlowerName) || flowerDto.Price <= 0 || flowerDto.AvailableQuantity < 0)
-    //    {
-    //        return BadRequest("Invalid input data.");
-    //    }
-
-    //    // Create a new flower object
-    //    var newFlower = new FlowerInfo
-    //    {
-    //        FlowerName = flowerDto.FlowerName,
-    //        FlowerDescription = flowerDto.FlowerDescription,
-    //        Price = flowerDto.Price,
-    //        CreatedAt = DateTime.UtcNow,
-    //        CategoryId = flowerDto.CategoryId,
-    //        AvailableQuantity = flowerDto.AvailableQuantity,
-    //        SellerId = flowerDto.SellerId // Associate flower with the seller
-    //    };
-
-    //    // If an image is uploaded, handle the upload to S3
-    //    if (flowerDto.Image != null && flowerDto.Image.Length > 0)
-    //    {
-    //        try
-    //        {
-    //            // Generate a unique file name for the image
-    //            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
-
-    //            using (var stream = flowerDto.Image.OpenReadStream())
-    //            {
-    //                // Upload the file to S3 and get the image URL
-    //                var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
-    //                newFlower.ImageUrl = imageUrl; // Save the image URL in the flower object
-    //            }
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            // Log the error and return a response
-    //            _logger.LogError(ex, "Error uploading image to S3.");
-    //            return StatusCode(500, "Error uploading image.");
-    //        }
-    //    }
-
-    //    // Save the new flower to the database
-    //    var createdFlower = await _flowerService.CreateFlower(newFlower); // Ensure CreateFlower returns Task<FlowerInfo>
-
-    //    // Return the created flower information
-    //    return Ok(new
-    //    {
-    //        FlowerID = createdFlower.FlowerId,
-    //        FlowerName = createdFlower.FlowerName,
-    //        FlowerDescription = createdFlower.FlowerDescription,
-    //        Price = createdFlower.Price,
-    //        AvailableQuantity = createdFlower.AvailableQuantity,
-    //        CategoryID = createdFlower.CategoryId,
-    //        ImageUrl = createdFlower.ImageUrl, // Include the image URL in the response
-    //        SellerID = createdFlower.SellerId, // Include the SellerId in the response
-    //        message = "Flower created successfully"
-    //    });
-    //}
-
     // POST api/flowerinfo/Create
     [HttpPost("Create")]
-    [Authorize(Roles = "seller")] // Only sellers can create flowers
     public async Task<IActionResult> CreateFlower([FromForm] FlowerDto flowerDto)
     {
         // Validate the input
         if (string.IsNullOrWhiteSpace(flowerDto.FlowerName) || flowerDto.Price <= 0 || flowerDto.AvailableQuantity < 0)
         {
             return BadRequest("Invalid input data.");
-        }
-
-        // Get the seller's ID from the JWT claims
-        var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
-        if (sellerIdClaim == null || !int.TryParse(sellerIdClaim.Value, out var sellerId))
-        {
-            return Unauthorized("You must be logged in as a seller to create flowers.");
         }
 
         // Create a new flower object
@@ -124,31 +53,36 @@ public class FlowerInfoController : ControllerBase
             CreatedAt = DateTime.UtcNow,
             CategoryId = flowerDto.CategoryId,
             AvailableQuantity = flowerDto.AvailableQuantity,
-            SellerId = sellerId // Set the seller's ID from the JWT
+            SellerId = flowerDto.SellerId // Associate flower with the seller
         };
 
-        // Handle image upload if provided
+        // If an image is uploaded, handle the upload to S3
         if (flowerDto.Image != null && flowerDto.Image.Length > 0)
         {
             try
             {
+                // Generate a unique file name for the image
                 var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
+
                 using (var stream = flowerDto.Image.OpenReadStream())
                 {
+                    // Upload the file to S3 and get the image URL
                     var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
                     newFlower.ImageUrl = imageUrl; // Save the image URL in the flower object
                 }
             }
             catch (Exception ex)
             {
+                // Log the error and return a response
                 _logger.LogError(ex, "Error uploading image to S3.");
                 return StatusCode(500, "Error uploading image.");
             }
         }
 
         // Save the new flower to the database
-        var createdFlower = await _flowerService.CreateFlower(newFlower);
+        var createdFlower = await _flowerService.CreateFlower(newFlower); // Ensure CreateFlower returns Task<FlowerInfo>
 
+        // Return the created flower information
         return Ok(new
         {
             FlowerID = createdFlower.FlowerId,
@@ -157,11 +91,77 @@ public class FlowerInfoController : ControllerBase
             Price = createdFlower.Price,
             AvailableQuantity = createdFlower.AvailableQuantity,
             CategoryID = createdFlower.CategoryId,
-            ImageUrl = createdFlower.ImageUrl,
-            SellerID = createdFlower.SellerId,
+            ImageUrl = createdFlower.ImageUrl, // Include the image URL in the response
+            SellerID = createdFlower.SellerId, // Include the SellerId in the response
             message = "Flower created successfully"
         });
     }
+
+    //// POST api/flowerinfo/Create
+    //[HttpPost("Create")]
+    //[Authorize(Roles = "seller")] // Only sellers can create flowers
+    //public async Task<IActionResult> CreateFlower([FromForm] FlowerDto flowerDto)
+    //{
+    //    // Validate the input
+    //    if (string.IsNullOrWhiteSpace(flowerDto.FlowerName) || flowerDto.Price <= 0 || flowerDto.AvailableQuantity < 0)
+    //    {
+    //        return BadRequest("Invalid input data.");
+    //    }
+
+    //    // Get the seller's ID from the JWT claims
+    //    var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+    //    if (sellerIdClaim == null || !int.TryParse(sellerIdClaim.Value, out var sellerId))
+    //    {
+    //        return Unauthorized("You must be logged in as a seller to create flowers.");
+    //    }
+
+    //    // Create a new flower object
+    //    var newFlower = new FlowerInfo
+    //    {
+    //        FlowerName = flowerDto.FlowerName,
+    //        FlowerDescription = flowerDto.FlowerDescription,
+    //        Price = flowerDto.Price,
+    //        CreatedAt = DateTime.UtcNow,
+    //        CategoryId = flowerDto.CategoryId,
+    //        AvailableQuantity = flowerDto.AvailableQuantity,
+    //        SellerId = sellerId // Set the seller's ID from the JWT
+    //    };
+
+    //    // Handle image upload if provided
+    //    if (flowerDto.Image != null && flowerDto.Image.Length > 0)
+    //    {
+    //        try
+    //        {
+    //            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
+    //            using (var stream = flowerDto.Image.OpenReadStream())
+    //            {
+    //                var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
+    //                newFlower.ImageUrl = imageUrl; // Save the image URL in the flower object
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            _logger.LogError(ex, "Error uploading image to S3.");
+    //            return StatusCode(500, "Error uploading image.");
+    //        }
+    //    }
+
+    //    // Save the new flower to the database
+    //    var createdFlower = await _flowerService.CreateFlower(newFlower);
+
+    //    return Ok(new
+    //    {
+    //        FlowerID = createdFlower.FlowerId,
+    //        FlowerName = createdFlower.FlowerName,
+    //        FlowerDescription = createdFlower.FlowerDescription,
+    //        Price = createdFlower.Price,
+    //        AvailableQuantity = createdFlower.AvailableQuantity,
+    //        CategoryID = createdFlower.CategoryId,
+    //        ImageUrl = createdFlower.ImageUrl,
+    //        SellerID = createdFlower.SellerId,
+    //        message = "Flower created successfully"
+    //    });
+    //}
 
 
 
@@ -221,16 +221,16 @@ public class FlowerInfoController : ControllerBase
 //    }));
 //}
     [HttpGet("seller/{sellerId}")]
-    [Authorize(Roles = "admin")] // Only admins can access this route
+    //[Authorize(Roles = "admin")] // Only admins can access this route
     public async Task<IActionResult> GetFlowersBySellerId(int sellerId)
     {
-        // Check if the user is an admin
-        var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+        //// Check if the user is an admin
+        //var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
-        if (userRole != "admin")
-        {
-            return Forbid("Bạn không có quyền truy cập thông tin này."); // Forbidden response for non-admins
-        }
+        //if (userRole != "admin")
+        //{
+        //    return Forbid("Bạn không có quyền truy cập thông tin này."); // Forbidden response for non-admins
+        //}
 
         // Fetch all flowers associated with the specified seller ID
         var flowers = await _context.FlowerInfos

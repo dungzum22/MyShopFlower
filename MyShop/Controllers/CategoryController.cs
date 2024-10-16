@@ -25,16 +25,16 @@ namespace MyShop.Controllers
 
 
         [HttpPost("CreateCategory")]
-        [Authorize(Roles = "admin")] // Only admins can access this route
+        //[Authorize(Roles = "admin")] // Only admins can access this route
         public async Task<IActionResult> CreateCategory([FromForm] CreateCategoryDto categoryDto)
         {
-            // Check if the user is an admin
-            var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            //// Check if the user is an admin
+            //var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
-            if (userRole != "admin")
-            {
-                return Forbid("Bạn không có quyền truy cập thông tin này."); // Forbidden response for non-admins
-            }
+            //if (userRole != "admin")
+            //{
+            //    return Forbid("Bạn không có quyền truy cập thông tin này."); // Forbidden response for non-admins
+            //}
 
             if (string.IsNullOrWhiteSpace(categoryDto.CategoryName))
             {

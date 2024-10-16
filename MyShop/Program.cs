@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Amazon.S3;
 using MyShop.Services.ApplicationDbContext;
 using Amazon.Runtime;
+using MyShop.Services.Reports;
 
 namespace MyShop
 {
@@ -45,6 +46,11 @@ namespace MyShop
             // Add services to the container.
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+            });
 
             // Đăng ký ApplicationDbContext trong dependency injection container
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -59,6 +65,7 @@ namespace MyShop
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFlowerService, FlowerService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
+            builder.Services.AddScoped<IReportService, ReportService>();
 
             // Cấu hình Google Authentication và Cookie Authentication
             builder.Services.AddAuthentication(options =>
