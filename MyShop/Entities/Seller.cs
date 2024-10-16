@@ -11,6 +11,8 @@ public partial class Seller
 
     public string ShopName { get; set; } = null!;
 
+    public string AddressSeller { get; set; } = null!;
+
     public string? Type { get; set; }
 
     public DateTime? CreatedAt { get; set; }

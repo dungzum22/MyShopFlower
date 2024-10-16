@@ -109,14 +109,21 @@ public class FlowerInfoController : ControllerBase
             return BadRequest("Invalid input data.");
         }
 
-        // Get the seller's ID from the JWT claims
-        var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-        if (sellerIdClaim == null || !int.TryParse(sellerIdClaim.Value, out var sellerId))
+        // Lấy userId từ token JWT
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
         {
-            return Unauthorized("You must be logged in as a seller to create flowers.");
+            return Unauthorized("You must be logged in to create flowers.");
         }
 
-        // Create a new flower object
+        // Kiểm tra xem user hiện tại có phải là seller không
+        var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+        if (seller == null)
+        {
+            return Unauthorized("You must be a seller to create flowers.");
+        }
+
+        // Tạo một đối tượng flower mới
         var newFlower = new FlowerInfo
         {
             FlowerName = flowerDto.FlowerName,
@@ -125,7 +132,7 @@ public class FlowerInfoController : ControllerBase
             CreatedAt = DateTime.UtcNow,
             CategoryId = flowerDto.CategoryId,
             AvailableQuantity = flowerDto.AvailableQuantity,
-            SellerId = sellerId // Set the seller's ID from the JWT
+            SellerId = seller.SellerId // Lấy sellerId từ bảng Seller
         };
 
         // Handle image upload if provided
@@ -164,178 +171,22 @@ public class FlowerInfoController : ControllerBase
         });
     }
 
-
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetFlower(int id)
-    {
-        var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
-
-        if (flower == null)
-        {
-            return NotFound("Thông tin hoa không tồn tại.");
-        }
-
-        return Ok(new
-        {
-            flower.FlowerId,
-            flower.FlowerName,
-            flower.FlowerDescription,
-            flower.Price,
-            flower.AvailableQuantity,
-            flower.ImageUrl,
-            flower.SellerId
-            //flower.CreatedDate,
-            //flower.UpdatedDate
-        });
-    }
-
-
-
-
-
-    ////GetALL hoa của 1 sellerID
-    //[HttpGet("seller/{sellerId}")]
-    //public async Task<IActionResult> GetFlowersBySellerId(int sellerId)
-    //{
-    //    // Fetch all flowers associated with the specified seller ID
-    //    var flowers = await _context.FlowerInfos
-    //        .Where(f => f.SellerId == sellerId)
-    //        .ToListAsync();
-
-    //    // Check if any flowers were found for the seller
-    //    if (!flowers.Any())
-    //    {
-    //        return NotFound($"No flowers found for Seller ID: {sellerId}.");
-    //    }
-
-    //    // Return the list of flowers for the seller
-    //    return Ok(flowers.Select(f => new
-    //    {
-    //        f.FlowerId,
-    //        f.FlowerName,
-    //        f.FlowerDescription,
-    //        f.Price,
-    //        f.AvailableQuantity,
-    //        f.ImageUrl,
-    //        f.CategoryId // Include CategoryId if needed
-    //    }));
-    //}
-    [HttpGet("seller/{sellerId}")]
-    [Authorize(Roles = "admin")] // Only admins can access this route
-    public async Task<IActionResult> GetFlowersBySellerId(int sellerId)
-    {
-        // Check if the user is an admin
-        var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-
-        if (userRole != "admin")
-        {
-            return Forbid("Bạn không có quyền truy cập thông tin này."); // Forbidden response for non-admins
-        }
-
-        // Fetch all flowers associated with the specified seller ID
-        var flowers = await _context.FlowerInfos
-            .Where(f => f.SellerId == sellerId)
-            .ToListAsync();
-
-        // Check if any flowers were found for the seller
-        if (!flowers.Any())
-        {
-            return NotFound($"Không có hoa nào thuộc người bán có ID: {sellerId}.");
-        }
-
-        // Return the list of flowers for the seller
-        return Ok(flowers.Select(f => new
-        {
-            f.FlowerId,
-            f.FlowerName,
-            f.FlowerDescription,
-            f.Price,
-            f.AvailableQuantity,
-            f.ImageUrl,
-            f.CategoryId
-        }));
-    }
-
-
-
-
-
-
-    //[HttpPut("update{id}")]
-    //[Authorize(Roles = "seller")] // Only sellers can create flowers
-    //public async Task<IActionResult> UpdateFlower(int id, [FromForm] FlowerDto flowerDto)
-    //{
-    //    // Tìm FlowerInfo dựa trên flower_id
-    //    var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
-
-    //    if (flower == null)
-    //    {
-    //        return NotFound("Thông tin hoa không tồn tại.");
-    //    }
-
-    //    // Cập nhật các thông tin từ DTO vào model FlowerInfo
-    //    flower.FlowerName = flowerDto.FlowerName;
-    //    flower.FlowerDescription = flowerDto.FlowerDescription;
-    //    flower.Price = (Decimal)flowerDto.Price;
-    //    flower.AvailableQuantity = (int)flowerDto.AvailableQuantity;
-
-    //    // Xử lý imageUrl nếu có file tải lên
-    //    if (flowerDto.Image != null && flowerDto.Image.Length > 0)
-    //    {
-    //        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
-    //        var filePath = $"flower-img/{fileName}";
-    //        try
-    //        {
-    //            using (var stream = flowerDto.Image.OpenReadStream())
-    //            {
-    //                // Upload file lên S3 và lấy URL 
-    //                var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
-    //                // Cập nhật đường dẫn ảnh vào cơ sở dữ liệu
-    //                flower.ImageUrl = imageUrl;
-    //            }
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            _logger.LogError(ex, "Có lỗi xảy ra khi tải ảnh lên S3.");
-    //            return StatusCode(500, $"{ex}Có lỗi xảy ra khi tải ảnh lên.");
-    //        }
-    //    }
-
-    //    // Cập nhật ngày chỉnh sửa
-    //    flower.CreatedAt = DateTime.UtcNow;
-
-    //    // Đánh dấu entity là đã thay đổi và lưu thay đổi vào cơ sở dữ liệu
-    //    _context.Entry(flower).State = EntityState.Modified;
-
-    //    try
-    //    {
-    //        await _context.SaveChangesAsync();
-    //    }
-    //    catch (DbUpdateConcurrencyException)
-    //    {
-    //        if (!_context.FlowerInfos.Any(f => f.FlowerId == flower.FlowerId))
-    //        {
-    //            return NotFound("Không tìm thấy hoa này.");
-    //        }
-    //        else
-    //        {
-    //            throw;
-    //        }
-    //    }
-
-    //    return Ok("Thông tin hoa đã được cập nhật thành công.");
-    //}
-
     [HttpPut("update{id}")]
     [Authorize(Roles = "seller")] // Only sellers can update flowers
     public async Task<IActionResult> UpdateFlower(int id, [FromForm] FlowerDto flowerDto)
     {
-        // Get the seller's ID from the JWT claims
-        var sellerIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-        if (sellerIdClaim == null || !int.TryParse(sellerIdClaim.Value, out var sellerId))
+        // Lấy userId từ token JWT
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
         {
             return Unauthorized("You must be logged in as a seller to update flowers.");
+        }
+
+        // Kiểm tra xem user hiện tại có phải là seller không
+        var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+        if (seller == null)
+        {
+            return Unauthorized("You must be a seller to update flowers.");
         }
 
         // Find the flower by ID
@@ -347,7 +198,7 @@ public class FlowerInfoController : ControllerBase
         }
 
         // Check if the current seller owns the flower
-        if (flower.SellerId != sellerId)
+        if (flower.SellerId != seller.SellerId)
         {
             return Forbid("You do not have permission to update this flower.");
         }
