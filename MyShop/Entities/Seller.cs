@@ -27,6 +27,8 @@ public partial class Seller
 
     public int? Quantity { get; set; }
 
+    public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
+
     public virtual ICollection<FlowerInfo> FlowerInfos { get; set; } = new List<FlowerInfo>();
 
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();

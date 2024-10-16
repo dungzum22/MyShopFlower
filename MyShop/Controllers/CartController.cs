@@ -79,7 +79,6 @@ namespace MyShop.Controllers
                 });
             }
 
-
             // Tính tổng giá tiền và tổng số lượng sản phẩm trong giỏ hàng
             var cartSummary = new CartSummaryDto
             {
