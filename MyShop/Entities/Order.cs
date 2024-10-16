@@ -7,13 +7,7 @@ public partial class Order
 {
     public int OrderId { get; set; }
 
-    public string? FlowerName { get; set; }
-
-    public int? SellerId { get; set; }
-
-    public decimal Price { get; set; }
-
-    public int Quantity { get; set; }
+    public int? FlowerId { get; set; }
 
     public int? UserId { get; set; }
 
@@ -21,11 +15,7 @@ public partial class Order
 
     public string PaymentMethod { get; set; } = null!;
 
-    public string? TransactionId { get; set; }
-
     public string DeliveryMethod { get; set; } = null!;
-
-    public string? Status { get; set; }
 
     public DateTime? CreatedDate { get; set; }
 
@@ -35,13 +25,15 @@ public partial class Order
 
     public int? CartId { get; set; }
 
+    public decimal? TotalPrice { get; set; }
+
     public virtual Address? Address { get; set; }
 
     public virtual Cart? Cart { get; set; }
 
-    public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
+    public virtual FlowerInfo? Flower { get; set; }
 
-    public virtual Seller? Seller { get; set; }
+    public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
 
     public virtual User? User { get; set; }
 

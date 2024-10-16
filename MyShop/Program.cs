@@ -39,7 +39,12 @@ namespace MyShop
             builder.Services.AddSingleton<S3StorageService>();
 
             // Add services to the container.
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+                 {
+                     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+                     options.JsonSerializerOptions.WriteIndented = true;
+                 });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             // Đăng ký các service
@@ -57,15 +62,13 @@ namespace MyShop
             // Đăng ký UserService vào Dependency Injection (DI)
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFlowerService, FlowerService>();
-            // Đăng ký IHttpClientFactory để sử dụng HttpClient
+            //Đăng ký IHttpClientFactory để sử dụng HttpClient
             builder.Services.AddHttpClient();
 
             var configuration = builder.Configuration;
 
 
 
-            // Đăng ký IHttpClientFactory để sử dụng HttpClient
-            builder.Services.AddHttpClient();
 
             // Sử dụng MockGHNService cho IGHNService để thử nghiệm
             builder.Services.AddScoped<IGHNService, MockGHNService>();
@@ -74,7 +77,7 @@ namespace MyShop
             builder.Services.AddScoped<IVNPayService, VNPayService>();
 
 
-            
+
 
 
             // Configure JWT Authentication

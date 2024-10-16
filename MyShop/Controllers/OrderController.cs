@@ -19,14 +19,12 @@ namespace MyShop.Controllers
     {
         private readonly FlowershopContext _context;
         private readonly IGHNService _ghnService;
-        private readonly IVNPayService _vnpayService;
         private readonly ILogger<OrderController> _logger;
 
-        public OrderController(FlowershopContext context, IGHNService ghnService, IVNPayService vnpayService, ILogger<OrderController> logger)
+        public OrderController(FlowershopContext context, IGHNService ghnService, ILogger<OrderController> logger)
         {
             _context = context;
             _ghnService = ghnService;
-            _vnpayService = vnpayService;
             _logger = logger;
         }
 
@@ -55,11 +53,23 @@ namespace MyShop.Controllers
                 return BadRequest("Giỏ hàng của bạn trống!");
             }
 
-            // Nhóm các sản phẩm trong giỏ hàng theo người bán
-            var groupedCartItems = cart.GroupBy(c => c.Flower.SellerId).ToList();
+            // Tạo đơn hàng tổng
+            var order = new Order
+            {
+                UserId = userId,
+                PhoneNumber = request.PhoneNumber,
+                Status = "pending",
+                CreatedDate = DateTime.Now,
+                AddressId = (await _context.Addresses.FirstOrDefaultAsync(a => a.UserInfoId == userId))?.AddressId,
+                PaymentMethod = "VNPay"
+            };
 
-            // Duyệt qua từng nhóm sản phẩm và tạo đơn hàng cho mỗi người bán
-            var createdOrders = new List<Order>();
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+
+            // Nhóm các sản phẩm trong giỏ hàng theo người bán và tạo OrderDetail cho từng nhóm
+            var groupedCartItems = cart.GroupBy(c => c.Flower.SellerId).ToList();
+            var createdOrderDetails = new List<OrdersDetail>();
 
             foreach (var group in groupedCartItems)
             {
@@ -83,16 +93,16 @@ namespace MyShop.Controllers
 
                 // Tính tổng giá cho nhóm sản phẩm của người bán hiện tại
                 decimal totalPrice = group.Sum(item => item.Quantity * item.Flower.Price);
-                var order = new Order
+
+                // Tạo chi tiết đơn hàng cho người bán
+                var orderDetail = new OrdersDetail
                 {
-                    UserId = userId,
-                    PhoneNumber = request.PhoneNumber,
+                    OrderId = order.OrderId,
+                    SellerId = sellerId,
+                    TotalPrice = totalPrice,
                     DeliveryMethod = "Giao Hang Nhanh",
                     Status = "pending",
-                    CreatedDate = DateTime.Now,
-                    AddressId = userAddress.AddressId,
-                    PaymentMethod = "VNPay",
-                    SellerId = sellerId
+                    CartId = group.First().CartId
                 };
 
                 // Tính phí giao hàng giả lập
@@ -116,27 +126,44 @@ namespace MyShop.Controllers
                     return BadRequest($"Không thể tính phí giao hàng. Chi tiết lỗi: {ex.Message}");
                 }
 
-
-
-                // Call VNPay để xử lý thanh toán
-                try
-                {
-                    var transactionId = await _vnpayService.ProcessPaymentAsync(totalPrice, request.PhoneNumber);
-                    order.TransactionId = transactionId;
-                }
-                catch (HttpRequestException)
-                {
-                    return BadRequest("Thanh toán thất bại!");
-                }
-
-                // Lưu đơn hàng vào cơ sở dữ liệu
-                _context.Orders.Add(order);
-                createdOrders.Add(order);
+                // Lưu chi tiết đơn hàng vào cơ sở dữ liệu
+                _context.OrdersDetails.Add(orderDetail);
+                createdOrderDetails.Add(orderDetail);
             }
 
             await _context.SaveChangesAsync();
 
-            return Ok(createdOrders);
+            return Ok(new { order, createdOrderDetails });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetOrders()
+        {
+            // Lấy userId từ token JWT
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            if (userIdClaim == null)
+            {
+                return Unauthorized("Không xác định được người dùng.");
+            }
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+            {
+                return Unauthorized("UserId không hợp lệ.");
+            }
+
+            // Lấy danh sách đơn hàng của người dùng
+            var orders = await _context.Orders
+                .Include(o => o.Address)
+                .Include(o => o.OrdersDetails) // Bao gồm thông tin chi tiết đơn hàng
+                .ThenInclude(od => od.Cart) // Bao gồm thông tin giỏ hàng
+                .Where(o => o.UserId == userId)
+                .ToListAsync();
+
+            if (orders == null || !orders.Any())
+            {
+                return NotFound("Không tìm thấy đơn hàng nào.");
+            }
+
+            return Ok(orders);
         }
     }
 }
