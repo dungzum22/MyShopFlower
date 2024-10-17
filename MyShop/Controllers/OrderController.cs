@@ -103,26 +103,85 @@ namespace MyShop.Controllers
 
                 bool isFirstItemInGroup = true;
 
-                // Tạo chi tiết đơn hàng cho từng sản phẩm trong nhóm
+                // Kiểm tra xem người dùng có cung cấp voucher cho shop này không
+                decimal discountAmount = 0;
+                int? appliedVoucherStatusId = null; // Để lưu user_voucher_status_id đã được sử dụng cho nhóm sản phẩm này
+                if (request.VoucherIds != null && request.VoucherIds.Any())
+                {
+                    // Lấy voucher của shop này từ danh sách voucher IDs
+                    var voucherId = request.VoucherIds.FirstOrDefault(vid => _context.UserVoucherStatuses.Any(v => v.UserVoucherStatusId == vid && v.ShopId == seller.SellerId));
+                    if (voucherId != 0)
+                    {
+                        var voucher = await _context.UserVoucherStatuses
+                            .FirstOrDefaultAsync(v => v.UserVoucherStatusId == voucherId
+                                                    && v.UserInfoId == userId
+                                                    && v.ShopId == seller.SellerId
+                                                    && v.RemainingCount > 0
+                                                    && v.StartDate <= DateTime.Now
+                                                    && v.EndDate >= DateTime.Now);
+
+                        if (voucher != null)
+                        {
+                            // Áp dụng giảm giá cho tổng giá trị của sản phẩm của shop này
+                            var groupTotalPrice = group.Sum(item => item.Flower.Price * item.Quantity);
+                            discountAmount = groupTotalPrice * (decimal)voucher.Discount / 100;
+                            appliedVoucherStatusId = voucher.UserVoucherStatusId;
+
+                            // Giảm số lần sử dụng còn lại của voucher
+                            voucher.RemainingCount -= 1;
+                            voucher.UsageCount += 1;
+
+                            // Cập nhật vào database
+                            _context.UserVoucherStatuses.Update(voucher);
+                        }
+                    }
+                }
+
+                // Tạo chi tiết đơn hàng cho từng sản phẩm trong nhóm và phân bổ giảm giá
+                decimal groupTotalPriceBeforeDiscount = group.Sum(item => item.Flower.Price * item.Quantity);
+                decimal discountAllocated = 0;
+
                 foreach (var item in group)
                 {
+                    var itemPrice = item.Flower.Price * item.Quantity;
+                    decimal itemDiscount = 0;
+
+                    // Phân bổ giảm giá cho từng sản phẩm
+                    if (groupTotalPriceBeforeDiscount > 0 && discountAmount > 0)
+                    {
+                        itemDiscount = (itemPrice / groupTotalPriceBeforeDiscount) * discountAmount;
+                        discountAllocated += itemDiscount;
+                    }
+
+                    // Tạo chi tiết đơn hàng cho sản phẩm
                     var orderDetail = new OrdersDetail
                     {
                         OrderId = order.OrderId,
                         SellerId = item.Flower.SellerId,
                         FlowerId = item.FlowerId,
-                        Price = item.Flower.Price * item.Quantity + (isFirstItemInGroup ? shippingFee : 0), // Thêm phí giao hàng vào sản phẩm đầu tiên của nhóm
+                        Price = (itemPrice - itemDiscount) + (isFirstItemInGroup ? shippingFee : 0), // Thêm phí giao hàng vào sản phẩm đầu tiên của nhóm
                         Amount = item.Quantity,
                         Status = "pending",
                         CreatedAt = DateTime.Now,
                         AddressId = request.AddressId,
-                        DeliveryMethod = "Giao Hang Nhanh"
+                        DeliveryMethod = "Giao Hang Nhanh",
+                        UserVoucherStatusId = appliedVoucherStatusId // Lưu user_voucher_status_id vào OrdersDetail
                     };
 
-                    totalProductPrice += item.Flower.Price * item.Quantity;
+                    totalProductPrice += itemPrice - itemDiscount;
                     isFirstItemInGroup = false;
 
                     _context.OrdersDetails.Add(orderDetail);
+                }
+
+                // Điều chỉnh giá trị giảm để không có sai lệch do làm tròn
+                if (discountAllocated != discountAmount)
+                {
+                    var lastOrderDetail = _context.OrdersDetails.LastOrDefault(od => od.OrderId == order.OrderId);
+                    if (lastOrderDetail != null)
+                    {
+                        lastOrderDetail.Price -= (discountAllocated - discountAmount);
+                    }
                 }
             }
 
@@ -132,7 +191,9 @@ namespace MyShop.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { OrderId = order.OrderId, TotalPrice = order.TotalPrice });
-
         }
+
+
+
     }
 }
