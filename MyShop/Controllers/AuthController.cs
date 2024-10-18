@@ -32,13 +32,15 @@ public class AuthController : Controller
         var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
 
         // Định nghĩa các claims cho token
+
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new Claim[]
             {
-            new Claim(ClaimTypes.Name, user.UserId.ToString()),
-            new Claim(ClaimTypes.NameIdentifier, user.Username),
-            new Claim(ClaimTypes.Role, user.Type) // Thêm role của người dùng
+        new Claim("UserId", user.UserId.ToString()), // Lưu UserId từ bảng User
+        new Claim(ClaimTypes.Name, user.Username),   // Lưu Username từ bảng User
+        new Claim(ClaimTypes.Role, user.Type)        // Lưu vai trò (role) của người dùng
             }),
             Expires = DateTime.UtcNow.AddHours(1), // Token có hiệu lực trong 1 giờ
             Issuer = _config["Jwt:Issuer"],

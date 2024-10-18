@@ -1,8 +1,8 @@
-﻿using MyShop.DataContext;
+using MyShop.DataContext;
 using MyShop.Entities;
 
 
-public class CategoryService : ICategoryService 
+public class CategoryService : ICategoryService
 {
     private readonly FlowershopContext _context;
 

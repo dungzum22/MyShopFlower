@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace MyShop.Entities;
@@ -28,8 +28,6 @@ public partial class UserVoucherStatus
     public DateTime? CreatedAt { get; set; }
 
     public int? ShopId { get; set; }
-
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
 

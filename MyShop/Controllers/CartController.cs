@@ -2,12 +2,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyShop.DataContext;
+using MyShop.DTO;
 using MyShop.Entities;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using MyShop.DTO;
 
 namespace MyShop.Controllers
 {
@@ -18,11 +19,13 @@ namespace MyShop.Controllers
     {
         private readonly FlowershopContext _context;
         private readonly ILogger<CartController> _logger;
+        private readonly S3StorageService _s3StorageService;
 
-        public CartController(FlowershopContext context, ILogger<CartController> logger)
+        public CartController(FlowershopContext context, ILogger<CartController> logger, S3StorageService s3StorageService)
         {
             _context = context;
             _logger = logger;
+            _s3StorageService = s3StorageService;
         }
 
         // API GET: Lấy thông tin giỏ hàng
@@ -30,13 +33,17 @@ namespace MyShop.Controllers
         public async Task<IActionResult> GetCart()
         {
             // Lấy user_id từ JWT token
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
                 return Unauthorized("Không thể lấy thông tin người dùng từ token.");
             }
 
-            int userId = int.Parse(userIdClaim.Value);
+            int userId;
+            if (!int.TryParse(userIdClaim.Value, out userId))
+            {
+                return Unauthorized("UserId không hợp lệ.");
+            }
 
             // Tìm giỏ hàng dựa trên user_id
             var cartItems = await _context.Carts
@@ -49,16 +56,33 @@ namespace MyShop.Controllers
                 return NotFound("Giỏ hàng của bạn đang trống.");
             }
 
+            // Lấy URL ảnh từ AWS S3 bằng S3StorageService
+            var cartItemDtos = new List<CartItemDto>();
+            foreach (var cartItem in cartItems)
+            {
+                // Sử dụng trực tiếp đường dẫn từ bảng Flower_Info
+                string imageUrl = cartItem.Flower?.ImageUrl;
+
+                // Nếu cần, bạn có thể thêm kiểm tra để đảm bảo URL không null hoặc rỗng
+                if (string.IsNullOrEmpty(imageUrl))
+                {
+                    imageUrl = "path/to/default/image.jpg"; // Đặt một URL mặc định nếu không có ảnh
+                }
+
+                // Tạo đối tượng DTO cho từng sản phẩm trong giỏ hàng
+                cartItemDtos.Add(new CartItemDto
+                {
+                    FlowerName = cartItem.Flower?.FlowerName,
+                    ImageUrl = imageUrl,
+                    Price = cartItem.Flower?.Price ?? 0,
+                    Quantity = cartItem.Quantity
+                });
+            }
+
             // Tính tổng giá tiền và tổng số lượng sản phẩm trong giỏ hàng
             var cartSummary = new CartSummaryDto
             {
-                Items = cartItems.Select(c => new CartItemDto
-                {
-                    FlowerName = c.Flower?.FlowerName,
-                    ImageUrl = c.Flower?.ImageUrl,
-                    Price = c.Flower?.Price ?? 0,
-                    Quantity = c.Quantity
-                }).ToList(),
+                Items = cartItemDtos,
                 TotalQuantity = cartItems.Sum(c => c.Quantity),
                 TotalPrice = cartItems.Sum(c => c.Quantity * (c.Flower?.Price ?? 0))
             };
@@ -72,13 +96,17 @@ namespace MyShop.Controllers
         public async Task<IActionResult> AddToCart([FromQuery] int flowerId, [FromQuery] int quantity)
         {
             // Lấy user_id từ JWT token
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
                 return Unauthorized("Không thể lấy thông tin người dùng từ token.");
             }
 
-            int userId = int.Parse(userIdClaim.Value);
+            int userId;
+            if (!int.TryParse(userIdClaim.Value, out userId))
+            {
+                return Unauthorized("UserId không hợp lệ.");
+            }
 
             // Kiểm tra xem sản phẩm có tồn tại không
             var flower = await _context.FlowerInfos.FindAsync(flowerId);
@@ -122,13 +150,17 @@ namespace MyShop.Controllers
         public async Task<IActionResult> RemoveFromCart(int flowerId)
         {
             // Lấy user_id từ JWT token
-            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
                 return Unauthorized("Không thể lấy thông tin người dùng từ token.");
             }
 
-            int userId = int.Parse(userIdClaim.Value);
+            int userId;
+            if (!int.TryParse(userIdClaim.Value, out userId))
+            {
+                return Unauthorized("UserId không hợp lệ.");
+            }
 
             var cartItem = await _context.Carts.Include(c => c.Flower).FirstOrDefaultAsync(c => c.FlowerId == flowerId && c.UserId == userId);
             if (cartItem == null)

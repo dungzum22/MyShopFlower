@@ -1,4 +1,4 @@
-﻿using Amazon.S3;
+using Amazon.S3;
 using Amazon.S3.Model;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,16 +10,32 @@ public class S3StorageService
     private readonly IAmazonS3 _s3Client;
     private const string BucketName = "flower-shopz";
 
-    
     public S3StorageService(IAmazonS3 s3Client)
     {
-        _s3Client = s3Client ?? throw new ArgumentNullException(nameof(s3Client));
+        _s3Client = s3Client;
     }
 
+    public async Task<string> GetPresignedUrlAsync(string key)
+    {
+        try
+        {
+            var request = new GetPreSignedUrlRequest
+            {
+                BucketName = BucketName,
+                Key = key,
+                Expires = DateTime.UtcNow.AddMinutes(30) // URL có hiệu lực trong 30 phút
+            };
+            var url = _s3Client.GetPreSignedURL(request);
+            return url;
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Có lỗi khi tạo pre-signed URL cho hình ảnh: {ex.Message}");
+        }
+    }
 
     public async Task<string> UploadFileAsync(Stream inputStream, string fileName, bool isPublic = true)
     {
-        var filePath = $"flower-img/{fileName}";
         // Xác định contentType dựa vào phần mở rộng của file
         string contentType = MimeUtility.GetMimeMapping(fileName);
 
