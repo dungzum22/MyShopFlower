@@ -398,4 +398,32 @@ public class FlowerInfoController : ControllerBase
         return Ok("Flower updated successfully.");
     }
 
+    [HttpGet("GetAllFlowers")]
+    [AllowAnonymous] // Allow everyone to access this, even without authorization
+    public async Task<IActionResult> GetAllFlowers()
+    {
+        var flowers = await _context.FlowerInfos
+            .Select(f => new
+            {
+                FlowerId = f.FlowerId,
+                FlowerName = f.FlowerName,
+                FlowerDescription = f.FlowerDescription,
+                Price = f.Price,
+                AvailableQuantity = f.AvailableQuantity,
+                CategoryId = f.CategoryId,
+                ImageUrl = f.ImageUrl,
+                SellerId = f.SellerId,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+
+        if (!flowers.Any())
+        {
+            return NotFound(new { message = "No flowers found." });
+        }
+
+        return Ok(flowers);
+    }
+
+
 }
