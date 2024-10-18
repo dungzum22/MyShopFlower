@@ -1,65 +1,85 @@
-﻿//using Microsoft.AspNetCore.Authorization;
-//using Microsoft.AspNetCore.Mvc;
-//using Microsoft.EntityFrameworkCore;
-//using MyShop.DataContext;
-//using MyShop.Services;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Linq;
+using MyShop.DataContext;
+using MyShop.Services;
+using System.Threading.Tasks;
+using MyShop.Services;
+using System.Net;
 
-//namespace MyShop.Controllers
-//{
-//    [Route("api/[controller]")]
-//    [ApiController]
-//    [Authorize]
-//    public class VNPayController : ControllerBase
-//    {
-//        private readonly FlowershopContext _context;
-//        private readonly IVNPayService _vnpayService;
-//        private readonly ILogger<VNPayController> _logger;
+namespace MyShop.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class VNPayController : ControllerBase
+    {
+        private readonly FlowershopContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly VNPayService _vnPayService;
+        private readonly ILogger<VNPayController> _logger;
 
-//        public VNPayController(FlowershopContext context, IVNPayService vnpayService, ILogger<VNPayController> logger)
-//        {
-//            _context = context;
-//            _vnpayService = vnpayService;
-//            _logger = logger;
-//        }
+        public VNPayController(FlowershopContext context, IConfiguration configuration, VNPayService vnPayService, ILogger<VNPayController> logger)
+        {
+            _context = context;
+            _configuration = configuration;
+            _vnPayService = vnPayService;
+            _logger = logger;
+        }
 
-//        [HttpPost("process-payment")]
-//        public async Task<IActionResult> ProcessPayment([FromBody] int orderId)
-//        {
-//            // Lấy đơn hàng từ cơ sở dữ liệu
-//            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderId == orderId);
-//            if (order == null)
-//            {
-//                return NotFound("Không tìm thấy đơn hàng.");
-//            }
+        [HttpGet("vnpay_return")]
+        public IActionResult VNPayReturn()
+        {
+            var queryParameters = HttpContext.Request.Query;
+            _logger.LogInformation("Query parameters received from VNPay: {QueryParameters}", queryParameters);
+            var vnpayData = new SortedList<string, string>();
 
-//            if (order.Status != "pending")
-//            {
-//                return BadRequest("Đơn hàng không ở trạng thái hợp lệ để thanh toán.");
-//            }
+            foreach (var key in queryParameters.Keys)
+            {
+                if (key.StartsWith("vnp_"))
+                {
+                    vnpayData.Add(key, queryParameters[key]);
+                }
+            }
 
-//            // Xử lý thanh toán VNPay
-//            try
-//            {
-//                var transactionId = await _vnpayService.ProcessPaymentAsync(order.TotalPrice, order.PhoneNumber);
-//                order.TransactionId = transactionId;
-//                order.Status = "paid";
-//                await _context.SaveChangesAsync();
-//                return Ok(order);
-//            }
-//            catch (HttpRequestException ex)
-//            {
-//                _logger.LogError("Thanh toán thất bại: {Message}", ex.Message);
-//                return BadRequest($"Thanh toán thất bại. Chi tiết lỗi: {ex.Message}");
-//            }
-//        }
-//        [HttpGet("return")]
-//        public IActionResult ReturnUrl()
-//        {
-//            // Xử lý giả lập cho Swagger để ghi log khi thanh toán hoàn tất
-//            _logger.LogInformation("Redirected to return URL after VNPay payment.");
-//            return Ok("Thanh toán đã hoàn tất (giả lập).");
-//        }
+            // Lấy thông tin từ appsettings.json
+            string vnp_HashSecret = _configuration["VNPay:HashSecret"];
 
-//    }
-//}
-//}
+            // Tạo chuỗi dữ liệu để kiểm tra chữ ký
+            string rawData = string.Join("&", vnpayData
+     .Where(x => x.Key != "vnp_SecureHash")
+     .OrderBy(x => x.Key)
+     .Select(x => $"{WebUtility.UrlEncode(x.Key)}={WebUtility.UrlEncode(x.Value)}"));
+
+
+            string secureHash = vnpayData["vnp_SecureHash"];
+            string calculatedHash = _vnPayService.HmacSHA512(vnp_HashSecret, rawData);
+
+            _logger.LogInformation("Raw data for hash calculation: {RawData}", rawData);
+            _logger.LogInformation("Calculated hash: {CalculatedHash}", calculatedHash);
+            _logger.LogInformation("Received secure hash: {SecureHash}", secureHash);
+
+            if (calculatedHash.Equals(secureHash, System.StringComparison.OrdinalIgnoreCase))
+            {
+                // Kiểm tra mã đơn hàng và cập nhật trạng thái đơn hàng
+                var orderId = int.Parse(vnpayData["vnp_TxnRef"]);
+                var order = _context.Orders.FirstOrDefault(o => o.OrderId == orderId);
+                if (order != null)
+                {
+                    // Cập nhật trạng thái đơn hàng
+                    order.Status = vnpayData["vnp_ResponseCode"] == "00" ? "paid" : "failed";
+                    _context.Orders.Update(order);
+                    _context.SaveChanges();
+                }
+
+                return Ok("Giao dịch hoàn tất");
+            }
+            else
+            {
+                _logger.LogError("Signature verification failed for transaction: {TxnRef}", vnpayData["vnp_TxnRef"]);
+                return BadRequest("Chữ ký không hợp lệ");
+            }
+        }
+    }
+}

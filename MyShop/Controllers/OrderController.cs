@@ -7,6 +7,10 @@ using MyShop.Entities;
 using MyShop.Services;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using System.Web;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MyShop.Controllers
 {
@@ -18,12 +22,16 @@ namespace MyShop.Controllers
         private readonly FlowershopContext _context;
         private readonly ILogger<OrderController> _logger;
         private readonly IGHNService _ghnService;
+        private readonly IConfiguration _configuration;
+        private readonly VNPayService _vnPayService;
 
-        public OrderController(FlowershopContext context, ILogger<OrderController> logger, IGHNService ghnService)
+        public OrderController(FlowershopContext context, ILogger<OrderController> logger, IGHNService ghnService, IConfiguration configuration, VNPayService vnPayService)
         {
             _context = context;
             _logger = logger;
             _ghnService = ghnService;
+            _configuration = configuration; // Inject IConfiguration
+            _vnPayService = vnPayService;
         }
 
         [HttpPost]
@@ -43,7 +51,7 @@ namespace MyShop.Controllers
             // Lấy thông tin giỏ hàng của người dùng
             var cartItems = await _context.Carts
                 .Include(c => c.Flower)
-                .ThenInclude(f => f.Seller) // Include thêm thông tin người bán
+                .ThenInclude(f => f.Seller)
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
 
@@ -56,7 +64,8 @@ namespace MyShop.Controllers
 
             // Lấy địa chỉ giao hàng từ request
             var deliveryAddress = await _context.Addresses
-                .FirstOrDefaultAsync(a => a.AddressId == request.AddressId && a.UserInfoId == userId);
+                .FirstOrDefaultAsync(a => a.AddressId == request.AddressId);
+
             if (deliveryAddress == null)
             {
                 return BadRequest("Địa chỉ không hợp lệ.");
@@ -105,10 +114,9 @@ namespace MyShop.Controllers
 
                 // Kiểm tra xem người dùng có cung cấp voucher cho shop này không
                 decimal discountAmount = 0;
-                int? appliedVoucherStatusId = null; // Để lưu user_voucher_status_id đã được sử dụng cho nhóm sản phẩm này
+                int? appliedVoucherStatusId = null;
                 if (request.VoucherIds != null && request.VoucherIds.Any())
                 {
-                    // Lấy voucher của shop này từ danh sách voucher IDs
                     var voucherId = request.VoucherIds.FirstOrDefault(vid => _context.UserVoucherStatuses.Any(v => v.UserVoucherStatusId == vid && v.ShopId == seller.SellerId));
                     if (voucherId != 0)
                     {
@@ -122,22 +130,18 @@ namespace MyShop.Controllers
 
                         if (voucher != null)
                         {
-                            // Áp dụng giảm giá cho tổng giá trị của sản phẩm của shop này
                             var groupTotalPrice = group.Sum(item => item.Flower.Price * item.Quantity);
                             discountAmount = groupTotalPrice * (decimal)voucher.Discount / 100;
                             appliedVoucherStatusId = voucher.UserVoucherStatusId;
 
-                            // Giảm số lần sử dụng còn lại của voucher
                             voucher.RemainingCount -= 1;
                             voucher.UsageCount += 1;
 
-                            // Cập nhật vào database
                             _context.UserVoucherStatuses.Update(voucher);
                         }
                     }
                 }
 
-                // Tạo chi tiết đơn hàng cho từng sản phẩm trong nhóm và phân bổ giảm giá
                 decimal groupTotalPriceBeforeDiscount = group.Sum(item => item.Flower.Price * item.Quantity);
                 decimal discountAllocated = 0;
 
@@ -146,26 +150,24 @@ namespace MyShop.Controllers
                     var itemPrice = item.Flower.Price * item.Quantity;
                     decimal itemDiscount = 0;
 
-                    // Phân bổ giảm giá cho từng sản phẩm
                     if (groupTotalPriceBeforeDiscount > 0 && discountAmount > 0)
                     {
                         itemDiscount = (itemPrice / groupTotalPriceBeforeDiscount) * discountAmount;
                         discountAllocated += itemDiscount;
                     }
 
-                    // Tạo chi tiết đơn hàng cho sản phẩm
                     var orderDetail = new OrdersDetail
                     {
                         OrderId = order.OrderId,
                         SellerId = item.Flower.SellerId,
                         FlowerId = item.FlowerId,
-                        Price = (itemPrice - itemDiscount) + (isFirstItemInGroup ? shippingFee : 0), // Thêm phí giao hàng vào sản phẩm đầu tiên của nhóm
+                        Price = (itemPrice - itemDiscount) + (isFirstItemInGroup ? shippingFee : 0),
                         Amount = item.Quantity,
                         Status = "pending",
                         CreatedAt = DateTime.Now,
                         AddressId = request.AddressId,
                         DeliveryMethod = "Giao Hang Nhanh",
-                        UserVoucherStatusId = appliedVoucherStatusId // Lưu user_voucher_status_id vào OrdersDetail
+                        UserVoucherStatusId = appliedVoucherStatusId
                     };
 
                     totalProductPrice += itemPrice - itemDiscount;
@@ -174,7 +176,6 @@ namespace MyShop.Controllers
                     _context.OrdersDetails.Add(orderDetail);
                 }
 
-                // Điều chỉnh giá trị giảm để không có sai lệch do làm tròn
                 if (discountAllocated != discountAmount)
                 {
                     var lastOrderDetail = _context.OrdersDetails.LastOrDefault(od => od.OrderId == order.OrderId);
@@ -185,15 +186,22 @@ namespace MyShop.Controllers
                 }
             }
 
-            // Tính tổng giá trị đơn hàng bao gồm cả phí giao hàng
-            order.TotalPrice = totalProductPrice + totalShippingFee;
+            decimal totalPriceValue = totalProductPrice + totalShippingFee;
+            order.TotalPrice = totalPriceValue;  // Không làm tròn, sử dụng giá trị chính xác
 
             await _context.SaveChangesAsync();
 
-            return Ok(new { OrderId = order.OrderId, TotalPrice = order.TotalPrice });
+            // Ghi log chi tiết giá trị totalPriceValue và ipAddress
+            _logger.LogInformation("Total Price Before Sending to VNPay: {TotalPriceValue}", totalPriceValue);
+            string ipAddress = HttpContext.Connection.RemoteIpAddress.ToString();
+            ipAddress = (ipAddress == "::1") ? "127.0.0.1" : ipAddress;
+            _logger.LogInformation("IP Address: {IpAddress}", ipAddress);
+
+            // Gọi VNPay để tạo URL thanh toán
+            string paymentUrl = _vnPayService.CreatePaymentUrl(order, ipAddress);
+            _logger.LogInformation("Generated Payment URL: {PaymentUrl}", paymentUrl);
+
+            return Ok(new { OrderId = order.OrderId, TotalPrice = order.TotalPrice, PaymentUrl = paymentUrl });
         }
-
-
-
     }
 }
