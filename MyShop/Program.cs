@@ -74,7 +74,7 @@ namespace MyShop
             builder.Services.AddScoped<IGHNService, MockGHNService>();
 
             // Đăng ký VNPayService vào Dependency Injection (DI)
-            //builder.Services.AddScoped<IVNPayService, VNPayService>();
+            builder.Services.AddScoped<VNPayService>();
 
 
 

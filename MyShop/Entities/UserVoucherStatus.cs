@@ -29,8 +29,6 @@ public partial class UserVoucherStatus
 
     public int? ShopId { get; set; }
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
-
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
 
     public virtual Seller? Shop { get; set; }
