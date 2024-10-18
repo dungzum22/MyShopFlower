@@ -7,4 +7,8 @@ namespace MyShop.Services.Flowers
     {
         IEnumerable<FlowerInfo> SearchFlowers(string searchQuery);
     }
+
 }
+
+}
+

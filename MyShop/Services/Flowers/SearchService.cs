@@ -18,4 +18,8 @@ namespace MyShop.Services.Flowers
             return _context.FlowerInfos.Where(f => f.FlowerName.Contains(searchQuery) || f.FlowerDescription.Contains(searchQuery)).ToList();
         }
     }
+
 }
+
+}
+

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MyShop.DataContext;
 using MyShop.Entities;
 
@@ -12,8 +12,6 @@ namespace MyShop.Services.Flowers
         {
             _context = context;
         }
-
-
 
         public async Task<FlowerInfo> CreateFlower(FlowerInfo flower)
         {
@@ -51,7 +49,5 @@ namespace MyShop.Services.Flowers
             await _context.SaveChangesAsync();
             return true;
         }
-
-
     }
 }
