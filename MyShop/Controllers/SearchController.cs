@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using MyShop.DataContext;
 using MyShop.Services.Flowers;
 
@@ -17,8 +17,6 @@ namespace MyShop.Controllers
             _context = context;
             _searchService = searchService;
         }
-
-
 
         // GET api/search/Search/{name}
         [HttpGet("Search/{name}")]
