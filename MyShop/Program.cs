@@ -102,7 +102,7 @@ namespace MyShop
 
             builder.Services.AddSwaggerGen(c =>
             {
-                // Các cấu hình Swagger khác
+                
 
                 // Thêm bộ lọc để loại bỏ các trường không mong muốn
                 c.OperationFilter<RemoveUnusedFieldsOperationFilter>();

@@ -231,5 +231,44 @@ namespace MyShop.Controllers
 
             return Ok("UserInfo đã được tạo thành công.");
         }
+
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            try
+            {
+                // Truy vấn tất cả UserInfo từ cơ sở dữ liệu
+                var allUsers = await _context.UserInfos
+                    .Select(userInfo => new
+                    {
+                        userInfo.UserInfoId,
+                        userInfo.FullName,
+                        userInfo.Address,
+                        userInfo.BirthDate,
+                        userInfo.Sex,
+                        userInfo.Avatar,
+                        userInfo.Points,
+                        userInfo.CreatedDate,
+                        userInfo.UpdatedDate,
+                        Role = (bool)userInfo.IsSeller ? "Seller" : "User bình thường"
+                    })
+                    .ToListAsync();
+
+                // Kiểm tra nếu không có người dùng nào
+                if (allUsers == null || !allUsers.Any())
+                {
+                    return NotFound("Không có thông tin người dùng nào.");
+                }
+
+                // Trả về danh sách UserInfo
+                return Ok(allUsers);
+            }
+            catch (Exception ex)
+            {
+                // Ghi log nếu có lỗi xảy ra
+                _logger.LogError(ex, "An error occurred while fetching all users information.");
+                return StatusCode(500, "Có lỗi không mong muốn xảy ra.");
+            }
+        }
     }
 }

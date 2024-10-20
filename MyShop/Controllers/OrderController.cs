@@ -201,6 +201,9 @@ namespace MyShop.Controllers
             string paymentUrl = _vnPayService.CreatePaymentUrl(order, ipAddress);
             _logger.LogInformation("Generated Payment URL: {PaymentUrl}", paymentUrl);
 
+            _context.Carts.RemoveRange(cartItems);
+            await _context.SaveChangesAsync();
+
             return Ok(new { OrderId = order.OrderId, TotalPrice = order.TotalPrice, PaymentUrl = paymentUrl });
         }
     }
