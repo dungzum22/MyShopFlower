@@ -133,5 +133,47 @@ namespace MyShop.Controllers
                 return StatusCode(500, "Có lỗi xảy ra khi xóa địa chỉ.");
             }
         }
+
+
+        [HttpPut("{addressId}")]
+        public async Task<IActionResult> UpdateAddress(int addressId, [FromForm] UpdateAddressDto addressDto)
+        {
+            try
+            {
+                // Lấy user_id từ JWT token
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    _logger.LogError("User ID claim is missing or invalid in the JWT token.");
+                    return Unauthorized("Không thể lấy thông tin người dùng từ token.");
+                }
+
+                // Tìm địa chỉ cần cập nhật và kiểm tra quyền sở hữu
+                var address = await _context.Addresses.FirstOrDefaultAsync(a => a.AddressId == addressId && a.UserInfo.UserId == userId);
+                if (address == null)
+                {
+                    return NotFound("Không tìm thấy địa chỉ cần cập nhật hoặc bạn không có quyền cập nhật địa chỉ này.");
+                }
+
+                // Cập nhật thông tin địa chỉ
+                if (!string.IsNullOrEmpty(addressDto.Description))
+                {
+                    address.Description = addressDto.Description;
+                }
+
+                _context.Entry(address).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return Ok("Địa chỉ đã được cập nhật thành công.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while updating the address for user ID {UserId}.", User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value);
+                return StatusCode(500, "Có lỗi xảy ra khi cập nhật địa chỉ.");
+            }
+        }
+
+
     }
 }
