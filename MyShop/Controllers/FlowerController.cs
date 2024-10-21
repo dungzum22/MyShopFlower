@@ -29,9 +29,8 @@ public class FlowerInfoController : ControllerBase
         _logger = logger;
     }
 
-    // POST api/flowerinfo/Create
     [HttpPost("Create")]
-    [Authorize(Roles = "seller")] // Only sellers can create flowers
+    [Authorize(Roles = "seller")] // Chỉ seller có thể tạo hoa
     public async Task<IActionResult> CreateFlower([FromForm] FlowerDto flowerDto)
     {
         // Validate the input
@@ -54,7 +53,7 @@ public class FlowerInfoController : ControllerBase
             return Unauthorized("You must be a seller to create flowers.");
         }
 
-        // Tạo một đối tượng flower mới
+        // Tạo một đối tượng flower mới và sử dụng SellerId từ seller được lấy từ DB
         var newFlower = new FlowerInfo
         {
             FlowerName = flowerDto.FlowerName,
@@ -63,7 +62,7 @@ public class FlowerInfoController : ControllerBase
             CreatedAt = DateTime.UtcNow,
             CategoryId = flowerDto.CategoryId,
             AvailableQuantity = flowerDto.AvailableQuantity,
-            SellerId = seller.SellerId // Lấy sellerId từ bảng Seller
+            SellerId = seller.SellerId // Tự động lấy SellerId từ JWT token
         };
 
         // Handle image upload if provided
@@ -85,8 +84,14 @@ public class FlowerInfoController : ControllerBase
             }
         }
 
-        // Save the new flower to the database
+        // Lưu bông hoa mới vào cơ sở dữ liệu
         var createdFlower = await _flowerService.CreateFlower(newFlower);
+
+        // Cập nhật bảng seller - tăng total_product và quantity
+        seller.TotalProduct += 1; // Tăng 1 cho mỗi bông hoa mới
+        seller.Quantity += newFlower.AvailableQuantity; // Tăng số lượng hoa mới
+        _context.Sellers.Update(seller);
+        await _context.SaveChangesAsync();
 
         return Ok(new
         {
@@ -102,7 +107,8 @@ public class FlowerInfoController : ControllerBase
         });
     }
 
-    [HttpPut("update{id}")]
+
+    [HttpPut("Update/{id}")]
     [Authorize(Roles = "seller")] // Only sellers can update flowers
     public async Task<IActionResult> UpdateFlower(int id, [FromForm] FlowerDto flowerDto)
     {
@@ -120,26 +126,29 @@ public class FlowerInfoController : ControllerBase
             return Unauthorized("You must be a seller to update flowers.");
         }
 
-        // Find the flower by ID
+        // Tìm hoa dựa vào ID
         var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
         if (flower == null)
         {
             return NotFound("Flower not found.");
         }
 
-        // Check if the current seller owns the flower
+        // Kiểm tra xem seller hiện tại có phải là chủ sở hữu của bông hoa không
         if (flower.SellerId != seller.SellerId)
         {
             return Forbid("You do not have permission to update this flower.");
         }
 
-        // Update the flower details
+        // Tính sự chênh lệch của số lượng hoa
+        int quantityDifference = flowerDto.AvailableQuantity - flower.AvailableQuantity;
+
+        // Cập nhật thông tin của bông hoa
         flower.FlowerName = flowerDto.FlowerName;
         flower.FlowerDescription = flowerDto.FlowerDescription;
-        flower.Price = (decimal)flowerDto.Price;
-        flower.AvailableQuantity = (int)flowerDto.AvailableQuantity;
+        flower.Price = flowerDto.Price;
+        flower.AvailableQuantity = flowerDto.AvailableQuantity;
 
-        // Handle image upload if a new image is provided
+        // Xử lý upload hình ảnh nếu có cung cấp hình ảnh mới
         if (flowerDto.Image != null && flowerDto.Image.Length > 0)
         {
             var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
@@ -148,7 +157,7 @@ public class FlowerInfoController : ControllerBase
                 using (var stream = flowerDto.Image.OpenReadStream())
                 {
                     var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
-                    flower.ImageUrl = imageUrl; // Update the image URL
+                    flower.ImageUrl = imageUrl; // Cập nhật lại URL của hình ảnh
                 }
             }
             catch (Exception ex)
@@ -158,11 +167,14 @@ public class FlowerInfoController : ControllerBase
             }
         }
 
-        // Mark the entity as modified
+        // Đánh dấu đối tượng là đã được thay đổi
         _context.Entry(flower).State = EntityState.Modified;
 
         try
         {
+            // Cập nhật bảng seller - chỉ cập nhật quantity (không tăng total_product vì đây là cập nhật, không phải tạo mới)
+            seller.Quantity += quantityDifference; // Thay đổi số lượng dựa trên sự chênh lệch
+            _context.Sellers.Update(seller);
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
@@ -179,4 +191,43 @@ public class FlowerInfoController : ControllerBase
 
         return Ok("Flower updated successfully.");
     }
+
+
+    [HttpGet("GetAllFlowers")]
+    [AllowAnonymous] // Cho phép mọi người có thể truy cập vào để xem danh sách hoa
+    public async Task<IActionResult> GetAllFlowers()
+    {
+        try
+        {
+            // Lấy tất cả thông tin hoa từ cơ sở dữ liệu
+            var flowers = await _context.FlowerInfos.ToListAsync();
+
+            // Nếu không có hoa nào trong cơ sở dữ liệu
+            if (flowers == null || !flowers.Any())
+            {
+                return NotFound(new { message = "No flowers found." });
+            }
+
+            // Trả về danh sách các hoa
+            return Ok(flowers.Select(f => new
+            {
+                FlowerId = f.FlowerId,
+                FlowerName = f.FlowerName,
+                FlowerDescription = f.FlowerDescription,
+                Price = f.Price,
+                AvailableQuantity = f.AvailableQuantity,
+                ImageUrl = f.ImageUrl,
+                CategoryId = f.CategoryId,
+                SellerId = f.SellerId,
+                CreatedAt = f.CreatedAt
+            }));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving flowers.");
+            return StatusCode(500, "Internal server error while retrieving flowers.");
+        }
+    }
+
+
 }
