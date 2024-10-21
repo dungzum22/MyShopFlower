@@ -72,6 +72,89 @@ namespace MyShop.Controllers
             return Ok(flowers);
         }
 
+        [HttpGet("GetAllCategories")]
+        public IActionResult GetAllCategories()
+        {
+            // Lấy tất cả danh mục từ service
+            var categories = _categoryService.GetAllCategories();
+
+            // Nếu không có danh mục nào, trả về 404
+            if (categories == null || !categories.Any())
+            {
+                return NotFound(new { message = "No categories found." });
+            }
+
+            // Trả về danh sách các danh mục
+            return Ok(categories);
+        }
+
+        [HttpPut("UpdateCategory/{categoryId}")]
+        [Authorize(Roles = "admin")] // Chỉ admin có thể cập nhật danh mục
+        public async Task<IActionResult> UpdateCategory(int categoryId, [FromForm] UpdateCategoryDto categoryDto)
+        {
+            // Kiểm tra xem người dùng có phải admin không
+            var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+            if (userRole != "admin")
+            {
+                return Forbid("Bạn không có quyền truy cập thông tin này."); // Trả về Forbidden cho những ai không phải admin
+            }
+
+            if (string.IsNullOrWhiteSpace(categoryDto.CategoryName))
+            {
+                return BadRequest(new { message = "Category name is required." });
+            }
+
+            // Tìm category trong cơ sở dữ liệu
+            var existingCategory = await _categoryService.GetCategoryByIdAsync(categoryId);
+
+            if (existingCategory == null)
+            {
+                return NotFound(new { message = "Category not found." });
+            }
+
+            // Cập nhật thông tin category
+            existingCategory.CategoryName = categoryDto.CategoryName;
+
+            // Lưu thay đổi
+            await _categoryService.UpdateCategoryAsync(existingCategory);
+
+            return Ok(new
+            {
+                CategoryId = existingCategory.CategoryId,
+                CategoryName = existingCategory.CategoryName,
+                message = "Category updated successfully"
+            });
+        }
+
+        [HttpDelete("DeleteCategory/{categoryId}")]
+        [Authorize(Roles = "admin")] // Chỉ admin mới có thể xóa danh mục
+        public async Task<IActionResult> DeleteCategory(int categoryId)
+        {
+            // Kiểm tra xem người dùng có phải admin không
+            var userRole = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+            if (userRole != "admin")
+            {
+                return Forbid("Bạn không có quyền truy cập thông tin này."); // Trả về Forbidden nếu không phải admin
+            }
+
+            // Tìm danh mục trong cơ sở dữ liệu
+            var category = await _categoryService.GetCategoryByIdAsync(categoryId);
+
+            if (category == null)
+            {
+                return NotFound(new { message = "Category not found." });
+            }
+
+            // Xóa danh mục
+            await _categoryService.DeleteCategoryAsync(categoryId);
+
+            return Ok(new { message = "Category deleted successfully" });
+        }
+
+
+
 
 
     }
