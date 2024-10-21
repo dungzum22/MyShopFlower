@@ -27,6 +27,11 @@ public class AuthController : Controller
         if (user == null)
             return Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không chính xác." });
 
+        if (user.Status == "inactive")
+        {
+            return StatusCode(403, new { message = "Tài khoản của bạn đã bị ban." }); // Trả về lỗi 403 với thông báo
+        }
+
         // Tạo JWT token
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_config["Jwt:Key"]);
@@ -111,4 +116,38 @@ public class AuthController : Controller
         _userService.Logout();
         return Ok(new { message = "Đã đăng xuất thành công" });
     }
+
+    [HttpPut("update-status/{userId}")]
+    public IActionResult UpdateUserStatus(int userId)
+    {
+        var user = _userService.GetUserById(userId);
+        if (user == null)
+        {
+            return NotFound(new { message = "Không tìm thấy người dùng." });
+        }
+
+        // Cập nhật trạng thái của người dùng
+        user.Status = user.Status == "active" ? "inactive" : "active";  // Đổi từ active thành inactive và ngược lại
+        _userService.UpdateUser(user);
+
+        return Ok(new { message = "Trạng thái của người dùng đã được cập nhật.", newStatus = user.Status });
+    }
+    [HttpGet("all-users")]
+    public IActionResult GetAllUsers()
+    {
+        var users = _userService.GetAllUsers()
+            .Select(user => new
+            {
+                user.UserId,
+                user.Username,
+                user.Email,
+                user.Type,
+                user.CreatedDate,
+                user.Status
+            }).ToList();
+
+        return Ok(users);
+    }
+
+
 }

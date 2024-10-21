@@ -2,8 +2,6 @@
 using MyShop.DataContext;
 using System.Linq;
 
-using Org.BouncyCastle.Crypto.Generators;
-
 namespace MyShop.Services.Users
 {
     public class UserService : IUserService
@@ -56,7 +54,7 @@ namespace MyShop.Services.Users
             }
 
             // Mã hóa mật khẩu trước khi lưu
-            //user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
 
             // Thêm user mới vào database
             _context.Users.Add(user);
@@ -78,6 +76,49 @@ namespace MyShop.Services.Users
         public void Logout()
         {
             // Để trống hoặc có thể thêm logic nếu sử dụng session hoặc cookies
+        }
+
+        // Phương thức lấy toàn bộ người dùng mà không bao gồm mật khẩu
+        public List<User> GetAllUsers()
+        {
+            return _context.Users
+                .Select(u => new User
+                {
+                    UserId = u.UserId,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Type = u.Type,
+                    CreatedDate = u.CreatedDate,
+                    Status = u.Status
+                    // Không bao gồm Password
+                }).ToList();
+        }
+
+        // Phương thức lấy thông tin chi tiết của một người dùng
+        public User GetUserById(int userId)
+        {
+            return _context.Users
+                .Where(u => u.UserId == userId)
+                .Select(u => new User
+                {
+                    UserId = u.UserId,
+                    Username = u.Username,
+                    Email = u.Email,
+                    Type = u.Type,
+                    CreatedDate = u.CreatedDate,
+                    Status = u.Status
+                }).FirstOrDefault();
+        }
+
+        // Phương thức cập nhật thông tin người dùng (ví dụ như trạng thái)
+        public void UpdateUser(User user)
+        {
+            var existingUser = _context.Users.FirstOrDefault(u => u.UserId == user.UserId);
+            if (existingUser != null)
+            {
+                existingUser.Status = user.Status;  // Cập nhật trạng thái hoặc các trường khác
+                _context.SaveChanges();
+            }
         }
     }
 }
