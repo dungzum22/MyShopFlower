@@ -102,9 +102,9 @@ namespace MyShop
 
             builder.Services.AddSwaggerGen(c =>
             {
-                
 
-                // Thêm bộ lọc để loại bỏ các trường không mong muốn
+
+                 //Thêm bộ lọc để loại bỏ các trường không mong muốn
                 c.OperationFilter<RemoveUnusedFieldsOperationFilter>();
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {

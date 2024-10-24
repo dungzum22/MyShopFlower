@@ -23,7 +23,7 @@ public class AuthController : Controller
     {
         // Kiểm tra thông tin đăng nhập
         var user = _userService.Authenticate(username, password);
-    
+
         if (user == null)
             return Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không chính xác." });
 

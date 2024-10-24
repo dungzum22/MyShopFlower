@@ -20,7 +20,7 @@ public class FlowerInfoController : ControllerBase
     public FlowerInfoController(
         FlowershopContext context,
         IFlowerService flowerService,
-        S3StorageService s3StorageService, 
+        S3StorageService s3StorageService,
         ILogger<FlowerInfoController> logger)
     {
         _context = context;

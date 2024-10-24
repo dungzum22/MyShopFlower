@@ -27,9 +27,13 @@ public partial class FlowerInfo
 
     public virtual Category? Category { get; set; }
 
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
+
+    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual Seller? Seller { get; set; }
 }
