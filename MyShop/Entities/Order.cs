@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace MyShop.Entities;
@@ -17,13 +17,15 @@ public partial class Order
 
     public DateTime? CreatedDate { get; set; }
 
+    public int? UserVoucherStatusId { get; set; }
+
     public int? AddressId { get; set; }
 
     public int? CartId { get; set; }
 
     public decimal? TotalPrice { get; set; }
 
-    public string? Status { get; set; }
+    public int? Status { get; set; }
 
     public virtual Address? Address { get; set; }
 

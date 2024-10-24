@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using MyShop.DataContext;
 using MyShop.DTO;
@@ -9,7 +10,6 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class FlowerInfoController : ControllerBase
 {
     private readonly FlowershopContext _context;
@@ -98,6 +98,7 @@ public class FlowerInfoController : ControllerBase
             CategoryID = createdFlower.CategoryId,
             ImageUrl = createdFlower.ImageUrl,
             SellerID = createdFlower.SellerId,
+            Status = "available",
             message = "Flower created successfully"
         });
     }
@@ -178,5 +179,60 @@ public class FlowerInfoController : ControllerBase
         }
 
         return Ok("Flower updated successfully.");
+    }
+
+    [HttpGet("{flowerId}")]
+    public async Task<IActionResult> GetFlowerInfoById(int flowerId)
+    {
+        var flower = await _flowerService.GetFlowerById(flowerId);
+        if(flower == null)
+        {
+            return NotFound("Flower not found.");
+        }
+        else
+        {
+            return Ok(flower);
+        }
+    }
+
+    [HttpGet("flowers/{sellerId}")]
+    public async Task<IActionResult> GetFlowersBySellerId(int sellerId)
+    {
+        var flowerList = await _flowerService.GetAllFlowersBySellerId(sellerId);
+        if(flowerList == null)
+        {
+            return NotFound("Flower not found");
+        }
+        else
+        {
+            return Ok(flowerList);
+        }
+    }
+
+    [HttpGet("GetFlowersByPrice")]
+    public async Task<IActionResult> GetFlowerByPrice(decimal price1, decimal price2)
+    {
+        var flowers = await _context.FlowerInfos
+            .Where(f => f.Price >= price1 && f.Price <= price2)
+            .Select(f => new
+            {
+                FlowerId = f.FlowerId,
+                FlowerName = f.FlowerName,
+                FlowerDescription = f.FlowerDescription,
+                Price = f.Price,
+                AvailableQuantity = f.AvailableQuantity,
+                CategoryId = f.CategoryId,
+                ImageUrl = f.ImageUrl,
+                SellerId = f.SellerId,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+
+        if (!flowers.Any())
+        {
+            return NotFound(new { message = "No flowers found." });
+        }
+
+        return Ok(flowers);
     }
 }

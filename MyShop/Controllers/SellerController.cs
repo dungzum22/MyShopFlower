@@ -94,7 +94,35 @@ namespace MyShop.Controllers
                 return StatusCode(500, $"Có lỗi xảy ra khi đăng ký làm seller. {ex}");
             }
         }
+
+        [HttpGet("getSellerInfo")]
+        public async Task<IActionResult> GetSellerInfo()
+        {
+            try
+            {
+                // Lấy user_id từ JWT token
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+
+                if (userIdClaim == null)
+                {
+                    _logger.LogError("User ID claim is missing from the JWT token.");
+                    return Unauthorized("Không thể lấy thông tin người dùng từ token.");
+                }
+
+                if (!int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    _logger.LogError("Invalid user ID format in the token: {UserId}", userIdClaim.Value);
+                    return Unauthorized("Invalid user ID format in the token.");
+                }
+
+                var sellerInfo = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+                return Ok(sellerInfo);
+            }
+            catch(Exception e)
+            {
+                _logger.LogError(e, "An error occurred while fetch seller info");
+                return StatusCode(500, $"Có lỗi xảy ra khi lấy thông tin seller. {e}");
+            }
+        }
     }
-
-
 }

@@ -73,6 +73,21 @@ namespace MyShop.Controllers
         }
 
 
+        [HttpGet("flowers/{categoryName}")]
+        public IActionResult GetFlowersByCategoryName(string categoryName)
+        {
+            // Fetch flowers that belong to the given categoryId
+            var flowers = _categoryService.GetFlowersByCategoryName(categoryName);
 
+            if (flowers == null || !flowers.Any())
+            {
+                return NotFound(new { message = "No flowers found for this category." });
+            }
+
+            // Return the list of flowers
+            return Ok(flowers);
+
+
+        }
     }
 }

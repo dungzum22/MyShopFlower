@@ -72,6 +72,7 @@ namespace MyShop.Controllers
                 // Tạo đối tượng DTO cho từng sản phẩm trong giỏ hàng
                 cartItemDtos.Add(new CartItemDto
                 {
+                    FlowerId = cartItem.FlowerId,
                     FlowerName = cartItem.Flower?.FlowerName,
                     ImageUrl = imageUrl,
                     Price = cartItem.Flower?.Price ?? 0,

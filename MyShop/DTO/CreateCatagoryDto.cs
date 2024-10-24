@@ -1,5 +1,4 @@
-﻿
-namespace MyShop.DTO
+﻿namespace MyShop.DTO
 {
     public class CreateCategoryDto
     {

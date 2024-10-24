@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace MyShop.Entities;
 
-public partial class Order
+public partial class OrdersDetail
 {
     public int OrderId { get; set; }
 
@@ -31,5 +31,11 @@ public partial class Order
 
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
 
+
     public virtual User? User { get; set; }
+
+    public virtual Seller? Seller { get; set; }
+
+    public virtual UserVoucherStatus? UserVoucherStatus { get; set; }
+
 }

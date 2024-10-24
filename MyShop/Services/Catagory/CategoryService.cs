@@ -18,6 +18,12 @@ public class CategoryService : ICategoryService
         return _context.FlowerInfos.Where(f => f.CategoryId == categoryId).ToList();
     }
 
+    public IEnumerable<FlowerInfo> GetFlowersByCategoryName(string categoryName)
+    {
+        // Query to get flowers by category ID
+        return _context.FlowerInfos.Where(f => f.Category.CategoryName == categoryName).ToList();
+    }
+
     // Method to create a new category
     public async Task<Category> CreateCategoryAsync(Category category)
     {
@@ -25,8 +31,4 @@ public class CategoryService : ICategoryService
         await _context.SaveChangesAsync();
         return category;
     }
-
-
-
-
 }

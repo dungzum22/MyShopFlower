@@ -91,7 +91,7 @@ namespace MyShop.Controllers
                 _context.Addresses.Add(newAddress);
                 await _context.SaveChangesAsync();
 
-                return Ok("Địa chỉ đã được tạo thành công.");
+                return Ok(newAddress);
             }
             catch (Exception ex)
             {

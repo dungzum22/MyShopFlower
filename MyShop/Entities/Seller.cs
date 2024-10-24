@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace MyShop.Entities;
@@ -26,8 +26,6 @@ public partial class Seller
     public string? Introduction { get; set; }
 
     public int? Quantity { get; set; }
-
-    public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     public virtual ICollection<FlowerInfo> FlowerInfos { get; set; } = new List<FlowerInfo>();
 

@@ -42,7 +42,7 @@ namespace MyShop
             builder.Services.AddControllers()
             .AddJsonOptions(options =>
                  {
-                     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+                     options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
                      options.JsonSerializerOptions.WriteIndented = true;
                  });
             builder.Services.AddEndpointsApiExplorer();
@@ -102,7 +102,7 @@ namespace MyShop
 
             builder.Services.AddSwaggerGen(c =>
             {
-                // Các cấu hình Swagger khác
+                
 
                 // Thêm bộ lọc để loại bỏ các trường không mong muốn
                 c.OperationFilter<RemoveUnusedFieldsOperationFilter>();

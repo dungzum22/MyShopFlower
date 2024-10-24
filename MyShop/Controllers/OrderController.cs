@@ -80,7 +80,8 @@ namespace MyShop.Controllers
                 CreatedDate = DateTime.Now,
                 AddressId = request.AddressId,
                 DeliveryMethod = "Giao Hang Nhanh",
-                CartId = cartId
+                CartId = cartId,
+                //Status = (int)OrderStatus.Paid
             };
 
             _context.Orders.Add(order);

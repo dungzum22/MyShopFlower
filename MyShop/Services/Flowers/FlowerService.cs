@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MyShop.DataContext;
 using MyShop.Entities;
+using Newtonsoft.Json.Linq;
 
 namespace MyShop.Services.Flowers
 {
@@ -25,12 +26,17 @@ namespace MyShop.Services.Flowers
 
         public async Task<FlowerInfo> GetFlowerById(int id)
         {
-            return await _context.FlowerInfos.FindAsync(id);
+            return await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
         }
 
         public async Task<IEnumerable<FlowerInfo>> GetAllFlowers()
         {
             return await _context.FlowerInfos.ToListAsync();
+        }
+
+        public async Task<IEnumerable<FlowerInfo>> GetAllFlowersBySellerId(int sellerId)
+        {
+            return await _context.FlowerInfos.Where(f => f.SellerId == sellerId).ToListAsync();
         }
 
         public async Task<FlowerInfo> UpdateFlower(FlowerInfo flower)

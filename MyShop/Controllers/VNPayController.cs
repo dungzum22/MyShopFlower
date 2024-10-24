@@ -20,7 +20,8 @@ namespace MyShop.Controllers
         private readonly VNPayService _vnPayService;
         private readonly ILogger<VNPayController> _logger;
 
-        public VNPayController(FlowershopContext context, IConfiguration configuration, VNPayService vnPayService, ILogger<VNPayController> logger)
+        public VNPayController(FlowershopContext context, IConfiguration configuration, VNPayService vnPayService
+            , ILogger<VNPayController> logger)
         {
             _context = context;
             _configuration = configuration;
@@ -48,9 +49,9 @@ namespace MyShop.Controllers
 
             // Tạo chuỗi dữ liệu để kiểm tra chữ ký
             string rawData = string.Join("&", vnpayData
-     .Where(x => x.Key != "vnp_SecureHash")
-     .OrderBy(x => x.Key)
-     .Select(x => $"{WebUtility.UrlEncode(x.Key)}={WebUtility.UrlEncode(x.Value)}"));
+                .Where(x => x.Key != "vnp_SecureHash")
+                .OrderBy(x => x.Key)
+                .Select(x => $"{WebUtility.UrlEncode(x.Key)}={WebUtility.UrlEncode(x.Value)}"));
 
 
             string secureHash = vnpayData["vnp_SecureHash"];
@@ -68,12 +69,13 @@ namespace MyShop.Controllers
                 if (order != null)
                 {
                     // Cập nhật trạng thái đơn hàng
-                    order.Status = vnpayData["vnp_ResponseCode"] == "00" ? "paid" : "failed";
+                    order.Status = vnpayData["vnp_ResponseCode"] == "00" ? 1 : 0;
                     _context.Orders.Update(order);
                     _context.SaveChanges();
                 }
 
-                return Ok("Giao dịch hoàn tất");
+                //return Ok("Giao dịch hoàn tất");
+                return Redirect("http://localhost:5173/order-success");
             }
             else
             {

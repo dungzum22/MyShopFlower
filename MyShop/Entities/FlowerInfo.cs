@@ -23,6 +23,8 @@ public partial class FlowerInfo
 
     public int? SellerId { get; set; }
 
+    public string? Status { get; set; }
+
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     public virtual Category? Category { get; set; }

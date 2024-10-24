@@ -7,6 +7,7 @@ namespace MyShop.Services.Flowers
         Task<FlowerInfo> CreateFlower(FlowerInfo flower);
         Task<FlowerInfo> GetFlowerById(int id);
         Task<IEnumerable<FlowerInfo>> GetAllFlowers();
+        Task<IEnumerable<FlowerInfo>> GetAllFlowersBySellerId(int sellerId);
         Task<FlowerInfo> UpdateFlower(FlowerInfo flower);
         Task<bool> DeleteFlower(int id);
     }
