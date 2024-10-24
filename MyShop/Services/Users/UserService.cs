@@ -31,7 +31,7 @@ namespace MyShop.Services.Users
             }
 
             // Nếu không phải admin, kiểm tra bcrypt cho mật khẩu đã mã hóa
-            if (user.Type != "admin" && !BCrypt.Net.BCrypt.Verify(password, user.Password))
+            if (user.Type != "admin" && BCrypt.Net.BCrypt.Verify(password, user.Password))
             {
                 return null; // Mật khẩu không khớp
             }
