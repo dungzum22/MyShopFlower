@@ -40,15 +40,11 @@ namespace MyShop.Services.Reports
                 .ToListAsync();
         }
 
-        // Get all reports
         public async Task<List<Report>> GetAllReportsAsync()
         {
-            return await _context.Reports
-                .Include(r => r.User)
-                .Include(r => r.Seller)
-                .Include(r => r.Flower)
-                .ToListAsync();
+            return await _context.Reports.ToListAsync();
         }
+
 
         // Update the report's status
         public async Task UpdateReportStatusAsync(Report report)

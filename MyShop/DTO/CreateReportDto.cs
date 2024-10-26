@@ -4,8 +4,6 @@ namespace MyShop.DTOs
 {
     public class CreateReportDto
     {
-        [Required]
-        public int UserId { get; set; }
 
         [Required]
         public int FlowerId { get; set; }

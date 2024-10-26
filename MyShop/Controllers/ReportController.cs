@@ -22,82 +22,53 @@ namespace MyShop.Controllers
             _reportService = reportService;
         }
 
-        // API POST: Create a new report
-        //[HttpPost("CreateReport")]
-        //public async Task<IActionResult> CreateReport([FromForm] CreateReportDto reportDto)
-        //{
-        //    if (string.IsNullOrWhiteSpace(reportDto.ReportReason))
-        //    {
-        //        return BadRequest(new { message = "Report reason is required." });
-        //    }
-
-        //    var newReport = new Report
-        //    {
-        //        UserId = reportDto.UserId,
-        //        FlowerId = reportDto.FlowerId,
-        //        SellerId = reportDto.SellerId,
-        //        ReportReason = reportDto.ReportReason,
-        //        ReportDescription = reportDto.ReportDescription,
-        //        Status = "Pending",
-        //        CreatedAt = DateTime.UtcNow // Use UTC for consistency
-        //    };
-
-        //    var createdReport = await _reportService.CreateReportAsync(newReport);
-
-        //    // Adjusted to use reportId instead of id
-        //    return CreatedAtAction(nameof(GetReportById), new { reportId = createdReport.ReportId }, new
-        //    {
-        //        ReportId = createdReport.ReportId,
-        //        UserId = createdReport.UserId,
-        //        FlowerId = createdReport.FlowerId,
-        //        SellerId = createdReport.SellerId,
-        //        ReportReason = createdReport.ReportReason,
-        //        ReportDescription = createdReport.ReportDescription,
-        //        Status = createdReport.Status,
-        //        CreatedAt = createdReport.CreatedAt,
-        //        message = "Report created successfully"
-        //    });
-        //}
 
         // API POST: Create a new report
         [HttpPost("CreateReport")]
-        public async Task<IActionResult> CreateReport([FromForm] CreateReportDto reportDto)
+        public async Task<IActionResult> CreateReport([FromBody] CreateReportDto reportDto)
         {
-            // Extract userId from the JWT token
+            // Lấy userId từ JWT token
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
                 return Unauthorized("Không xác định được người dùng.");
             }
 
-            // Parse the userId claim to an integer
+            // Chuyển đổi userId từ token sang kiểu số nguyên
             if (!int.TryParse(userIdClaim.Value, out int userId))
             {
                 return Unauthorized("UserId không hợp lệ.");
             }
 
-            // Validate the report reason
+            // Kiểm tra xem userId có tồn tại trong bảng Users không
+            var userExists = await _context.Users.AnyAsync(u => u.UserId == userId);
+            if (!userExists)
+            {
+                return BadRequest(new { message = "User không tồn tại." });
+            }
+
+            // Kiểm tra lý do báo cáo
             if (string.IsNullOrWhiteSpace(reportDto.ReportReason))
             {
                 return BadRequest(new { message = "Report reason is required." });
             }
 
-            // Create a new report
+            // Tạo báo cáo mới
             var newReport = new Report
             {
-                UserId = userId, // Use userId from the token
+                UserId = userId, // Sử dụng userId từ token
                 FlowerId = reportDto.FlowerId,
                 SellerId = reportDto.SellerId,
                 ReportReason = reportDto.ReportReason,
                 ReportDescription = reportDto.ReportDescription,
-                Status = "Pending", // Default status
-                CreatedAt = DateTime.UtcNow // Use UTC for consistency
+                Status = "Pending", // Trạng thái mặc định
+                CreatedAt = DateTime.UtcNow // Sử dụng UTC để đồng bộ
             };
 
-            // Save the report via the service
+            // Lưu báo cáo qua service
             var createdReport = await _reportService.CreateReportAsync(newReport);
 
-            // Return the response
+            // Trả về phản hồi
             return CreatedAtAction(nameof(GetReportById), new { reportId = createdReport.ReportId }, new
             {
                 ReportId = createdReport.ReportId,
@@ -138,55 +109,27 @@ namespace MyShop.Controllers
             return Ok(reports);
         }
 
-        // API GET: Get all reports
+        //Get all Report
         [HttpGet("GetAllReports")]
         public async Task<IActionResult> GetAllReports()
         {
             var reports = await _reportService.GetAllReportsAsync();
-            return Ok(reports);
+
+            // Ánh xạ các trường cần thiết vào DTO
+            var reportDtos = reports.Select(r => new ReportDto
+            {
+                ReportId = r.ReportId,
+                UserId = r.UserId,
+                FlowerId = r.FlowerId,
+                SellerId = r.SellerId,
+                ReportReason = r.ReportReason,
+                ReportDescription = r.ReportDescription,
+                Status = r.Status ?? "Pending" // Đặt giá trị mặc định là "Pending" nếu Status là null
+            }).ToList();
+
+            return Ok(reportDtos);
         }
 
-        //// API PUT: Update the status of a report
-        //[HttpPut("UpdateReportStatus/{reportId}")]
-        //public async Task<IActionResult> UpdateReportStatus(int reportId, [FromForm] UpdateReportStatusDto updateReportStatusDto)
-        //{
-        //    // Get the report by ID
-        //    var report = await _reportService.GetReportByIdAsync(reportId);
-        //    if (report == null)
-        //    {
-        //        return NotFound(new { message = "Report not found." });
-        //    }
-
-        //    // Validate the status
-        //    if (string.IsNullOrWhiteSpace(updateReportStatusDto.Status))
-        //    {
-        //        return BadRequest(new { message = "Status is required." });
-        //    }
-
-        //    // Check if the status is one of the allowed values
-        //    if (updateReportStatusDto.Status != "Pending" &&
-        //        updateReportStatusDto.Status != "Resolved" &&
-        //        updateReportStatusDto.Status != "Dismissed")
-        //    {
-        //        return BadRequest(new { message = "Invalid status value." });
-        //    }
-
-        //    // Update the report status
-        //    report.Status = updateReportStatusDto.Status;
-        //    report.UpdatedAt = DateTime.UtcNow; // Use UTC for consistency
-
-        //    // Save the updated report
-        //    await _reportService.UpdateReportStatusAsync(report);
-
-        //    // Return success response
-        //    return Ok(new
-        //    {
-        //        message = "Report status updated successfully.",
-        //        ReportId = report.ReportId,
-        //        Status = report.Status,
-        //        UpdatedAt = report.UpdatedAt
-        //    });
-        //}
 
         [HttpPut("UpdateReportStatus/{reportId}")]
         public async Task<IActionResult> UpdateReportStatus(int reportId, [FromForm] UpdateReportStatusDto updateReportStatusDto)
