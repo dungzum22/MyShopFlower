@@ -4,8 +4,12 @@ using MyShop.Entities;
 using MyShop.Services.Users;
 using System;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
+using MimeKit;
+using MailKit.Net.Smtp;
+using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 public class AuthController : Controller
 {
@@ -82,14 +86,14 @@ public class AuthController : Controller
             return BadRequest(new { message = "Email đã tồn tại." });
         }
 
-        //// Tạo user mới với mật khẩu đã mã hóa
+        // Tạo user mới với mật khẩu đã mã hóa
         var newUser = new User
         {
             Username = username,
             Password = BCrypt.Net.BCrypt.HashPassword(password), // Mã hóa mật khẩu
             Email = email,
             CreatedDate = DateTime.UtcNow,
-            Type = "user",  // Hoặc loại người dùng mặc định
+            Type = "user",  // Loại người dùng mặc định
             Status = "active"
         };
 
@@ -100,7 +104,26 @@ public class AuthController : Controller
             return BadRequest(new { message = "Đăng ký không thành công." });
         }
 
-        //// Trả về thông tin người dùng đã được tạo
+        // Gửi email xác nhận đăng ký thành công
+        var emailMessage = new MimeMessage();
+        emailMessage.From.Add(new MailboxAddress("MyShop", _config["EmailSettings:SenderEmail"]));
+        emailMessage.To.Add(new MailboxAddress(newUser.Username, newUser.Email));
+        emailMessage.Subject = "Chào mừng bạn đã đăng ký thành công tại MyShop";
+        emailMessage.Body = new TextPart("plain")
+        {
+            Text = $"Xin chào {newUser.Username},\n\nCảm ơn bạn đã đăng ký tài khoản tại MyShop.\n\nChúng tôi hy vọng bạn sẽ có những trải nghiệm tuyệt vời khi sử dụng dịch vụ của chúng tôi.\n\nTrân trọng,\nĐội ngũ MyShop"
+        };
+
+        using (var client = new SmtpClient())
+        {
+            // Sử dụng StartTls cho cổng 587 hoặc SslOnConnect cho cổng 465
+            client.Connect(_config["EmailSettings:SmtpServer"], int.Parse(_config["EmailSettings:Port"]), MailKit.Security.SecureSocketOptions.StartTls);
+            client.Authenticate(_config["EmailSettings:SenderEmail"], _config["EmailSettings:SenderPassword"]);
+            client.Send(emailMessage);
+            client.Disconnect(true);
+        }
+
+        // Trả về thông tin người dùng đã được tạo
         return Ok(new
         {
             UserId = createdUser.UserId,
