@@ -228,6 +228,41 @@ public class FlowerInfoController : ControllerBase
             return StatusCode(500, "Internal server error while retrieving flowers.");
         }
     }
+    [HttpGet("GetFlowerById/{id}")]
+    [AllowAnonymous] 
+    public async Task<IActionResult> GetFlowerById(int id)
+    {
+        try
+        {
+            // Retrieve the flower from the database using the provided ID
+            var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
+
+            // If the flower does not exist, return a 404 Not Found
+            if (flower == null)
+            {
+                return NotFound(new { message = "Flower not found." });
+            }
+
+            // Return the flower's details
+            return Ok(new
+            {
+                FlowerId = flower.FlowerId,
+                FlowerName = flower.FlowerName,
+                FlowerDescription = flower.FlowerDescription,
+                Price = flower.Price,
+                AvailableQuantity = flower.AvailableQuantity,
+                ImageUrl = flower.ImageUrl,
+                CategoryId = flower.CategoryId,
+                SellerId = flower.SellerId,
+                CreatedAt = flower.CreatedAt
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving the flower.");
+            return StatusCode(500, "Internal server error while retrieving the flower.");
+        }
+    }
 
 
 }
