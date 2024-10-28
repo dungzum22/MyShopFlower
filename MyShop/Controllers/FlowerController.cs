@@ -103,92 +103,201 @@ public class FlowerInfoController : ControllerBase
         });
     }
 
-     [HttpPut("Update/{id}")]
- [Authorize(Roles = "seller")] // Only sellers can update flowers
- public async Task<IActionResult> UpdateFlower(int id, [FromBody] FlowerDto flowerDto)
- {
-     // Lấy userId từ token JWT
-     var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-     if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
-     {
-         return Unauthorized("You must be logged in as a seller to update flowers.");
-     }
+    //    [HttpPut("Update/{id}")]
+    //[Authorize(Roles = "seller")] // Only sellers can update flowers
+    //public async Task<IActionResult> UpdateFlower(int id, [FromBody] FlowerDto flowerDto)
+    //{
+    //    // Lấy userId từ token JWT
+    //    var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+    //    if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+    //    {
+    //        return Unauthorized("You must be logged in as a seller to update flowers.");
+    //    }
 
-     // Kiểm tra xem user hiện tại có phải là seller không
-     var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
-     if (seller == null)
-     {
-         return Unauthorized("You must be a seller to update flowers.");
-     }
+    //    // Kiểm tra xem user hiện tại có phải là seller không
+    //    var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+    //    if (seller == null)
+    //    {
+    //        return Unauthorized("You must be a seller to update flowers.");
+    //    }
 
-     // Find the flower by ID
-     var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
-     if (flower == null)
-     {
-         return NotFound("Flower not found.");
-     }
+    //    // Find the flower by ID
+    //    var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
+    //    if (flower == null)
+    //    {
+    //        return NotFound("Flower not found.");
+    //    }
 
-     // Check if the current seller owns the flower
-     if (flower.SellerId != seller.SellerId)
-     {
-         return Forbid("You do not have permission to update this flower.");
-     }
+    //    // Check if the current seller owns the flower
+    //    if (flower.SellerId != seller.SellerId)
+    //    {
+    //        return Forbid("You do not have permission to update this flower.");
+    //    }
 
-     // Update the flower details
-     flower.FlowerName = flowerDto.FlowerName;
-     flower.FlowerDescription = flowerDto.FlowerDescription;
-     flower.Price = (decimal)flowerDto.Price;
-     flower.AvailableQuantity = (int)flowerDto.AvailableQuantity;
+    //    // Update the flower details
+    //    flower.FlowerName = flowerDto.FlowerName;
+    //    flower.FlowerDescription = flowerDto.FlowerDescription;
+    //    flower.Price = (decimal)flowerDto.Price;
+    //    flower.AvailableQuantity = (int)flowerDto.AvailableQuantity;
 
-     // Handle image upload if a new image is provided
-     if (flowerDto.Image != null && flowerDto.Image.Length > 0)
-     {
-         var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
-         try
-         {
-             using (var stream = flowerDto.Image.OpenReadStream())
-             {
-                 var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
-                 flower.ImageUrl = imageUrl; // Update the image URL
-             }
-         }
-         catch (Exception ex)
-         {
-             _logger.LogError(ex, "Error uploading image to S3.");
-             return StatusCode(500, "Error uploading image.");
-         }
-     }
+    //    // Handle image upload if a new image is provided
+    //    if (flowerDto.Image != null && flowerDto.Image.Length > 0)
+    //    {
+    //        var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
+    //        try
+    //        {
+    //            using (var stream = flowerDto.Image.OpenReadStream())
+    //            {
+    //                var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
+    //                flower.ImageUrl = imageUrl; // Update the image URL
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            _logger.LogError(ex, "Error uploading image to S3.");
+    //            return StatusCode(500, "Error uploading image.");
+    //        }
+    //    }
 
-     // Mark the entity as modified
-     _context.Entry(flower).State = EntityState.Modified;
+    //    // Mark the entity as modified
+    //    _context.Entry(flower).State = EntityState.Modified;
 
-     try
-     {
-         await _context.SaveChangesAsync();
-     }
-     catch (DbUpdateConcurrencyException)
-     {
-         if (!_context.FlowerInfos.Any(f => f.FlowerId == flower.FlowerId))
-         {
-             return NotFound("Flower not found.");
-         }
-         else
-         {
-             throw;
-         }
-     }
+    //    try
+    //    {
+    //        await _context.SaveChangesAsync();
+    //    }
+    //    catch (DbUpdateConcurrencyException)
+    //    {
+    //        if (!_context.FlowerInfos.Any(f => f.FlowerId == flower.FlowerId))
+    //        {
+    //            return NotFound("Flower not found.");
+    //        }
+    //        else
+    //        {
+    //            throw;
+    //        }
+    //    }
 
-     // Map updated flower entity to FlowerDto to return
-     var updatedFlowerDto = new FlowerDto
-     {
-         FlowerName = flower.FlowerName,
-         FlowerDescription = flower.FlowerDescription,
-         Price = flower.Price,
-         AvailableQuantity = flower.AvailableQuantity,
-     };
+    //    // Map updated flower entity to FlowerDto to return
+    //    var updatedFlowerDto = new FlowerDto
+    //    {
+    //        FlowerName = flower.FlowerName,
+    //        FlowerDescription = flower.FlowerDescription,
+    //        Price = flower.Price,
+    //        AvailableQuantity = flower.AvailableQuantity,
 
-     return Ok(updatedFlowerDto);
- }
+    //    };
+
+    //    return Ok(updatedFlowerDto);
+    //}
+
+    [HttpPut("Update/{id}")]
+    [Authorize(Roles = "seller")] // Only sellers can update flowers
+    public async Task<IActionResult> UpdateFlower(int id, [FromBody] FlowerDto flowerDto)
+    {
+        // Retrieve userId from JWT token
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+        {
+            return Unauthorized("You must be logged in as a seller to update flowers.");
+        }
+
+        // Check if the current user is a seller
+        var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+        if (seller == null)
+        {
+            return Unauthorized("You must be a seller to update flowers.");
+        }
+
+        // Find the flower by ID
+        var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
+        if (flower == null)
+        {
+            return NotFound("Flower not found.");
+        }
+
+        // Check if the current seller owns the flower
+        if (flower.SellerId != seller.SellerId)
+        {
+            return Forbid("You do not have permission to update this flower.");
+        }
+
+        // Update the flower details
+        flower.FlowerName = flowerDto.FlowerName;
+        flower.FlowerDescription = flowerDto.FlowerDescription;
+        flower.Price = flowerDto.Price; // assuming this is already a decimal
+        flower.AvailableQuantity = flowerDto.AvailableQuantity;
+
+        // Handle image upload if a new image is provided
+        if (flowerDto.Image != null && flowerDto.Image.Length > 0)
+        {
+            var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
+            try
+            {
+                using (var stream = flowerDto.Image.OpenReadStream())
+                {
+                    var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
+                    flower.ImageUrl = imageUrl; // Update the image URL
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading image to S3.");
+                return StatusCode(500, "Error uploading image.");
+            }
+        }
+
+        // Mark the entity as modified
+        _context.Entry(flower).State = EntityState.Modified;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.FlowerInfos.Any(f => f.FlowerId == flower.FlowerId))
+            {
+                return NotFound("Flower not found.");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        // Get all flowers by the current seller's ID
+        var flowersBySeller = await _context.FlowerInfos
+            .Where(f => f.SellerId == seller.SellerId)
+            .Select(f => new
+            {
+                FlowerId = f.FlowerId,
+                FlowerName = f.FlowerName,
+                FlowerDescription = f.FlowerDescription,
+                Price = f.Price,
+                AvailableQuantity = f.AvailableQuantity,
+                ImageUrl = f.ImageUrl,
+                CategoryId = f.CategoryId,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            Message = "Flower updated successfully.",
+            UpdatedFlower = new
+            {
+                FlowerId = flower.FlowerId,
+                FlowerName = flower.FlowerName,
+                FlowerDescription = flower.FlowerDescription,
+                Price = flower.Price,
+                AvailableQuantity = flower.AvailableQuantity,
+                ImageUrl = flower.ImageUrl,
+                CategoryId = flower.CategoryId,
+            },
+            SellerFlowers = flowersBySeller
+        });
+    }
 
     [HttpGet("GetAllFlowers")]
     [AllowAnonymous] // Cho phép mọi người có thể truy cập vào để xem danh sách hoa
