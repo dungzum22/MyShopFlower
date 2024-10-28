@@ -142,7 +142,9 @@ namespace MyShop.Controllers
             flower.AvailableQuantity -= quantity;
 
             await _context.SaveChangesAsync();
-            return Ok("Sản phẩm đã được thêm vào giỏ hàng.");
+
+            // Lấy giỏ hàng sau khi đã thêm sản phẩm
+            return await GetCart();
         }
 
         // API DELETE: Xóa sản phẩm khỏi giỏ hàng
@@ -176,7 +178,9 @@ namespace MyShop.Controllers
 
             _context.Carts.Remove(cartItem);
             await _context.SaveChangesAsync();
-            return Ok("Sản phẩm đã được xóa khỏi giỏ hàng.");
+
+            // Lấy giỏ hàng sau khi đã xóa sản phẩm
+            return await GetCart();
         }
     }
 }

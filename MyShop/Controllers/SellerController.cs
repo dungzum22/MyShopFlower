@@ -25,7 +25,7 @@ namespace MyShop.Controllers
 
         // API POST: Đăng ký làm seller
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterSeller([FromForm] RegisterSellerDto sellerDto)
+        public async Task<IActionResult> RegisterSeller([FromBody] RegisterSellerDto sellerDto)
         {
             try
             {
