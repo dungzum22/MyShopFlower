@@ -16,7 +16,7 @@ namespace MyShop.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]  // Người dùng cần đăng nhập để truy cập
+    [Authorize]  
     public class OrderController : ControllerBase
     {
         private readonly FlowershopContext _context;
@@ -201,7 +201,7 @@ namespace MyShop.Controllers
             string paymentUrl = _vnPayService.CreatePaymentUrl(order, ipAddress);
             _logger.LogInformation("Generated Payment URL: {PaymentUrl}", paymentUrl);
 
-            _context.Carts.RemoveRange(cartItems);
+
             await _context.SaveChangesAsync();
 
             return Ok(new { OrderId = order.OrderId, TotalPrice = order.TotalPrice, PaymentUrl = paymentUrl });

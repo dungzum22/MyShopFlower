@@ -68,7 +68,7 @@ namespace MyShop.Controllers
                 if (order != null)
                 {
                     // Cập nhật trạng thái đơn hàng
-                    order.Status = vnpayData["vnp_ResponseCode"] == "00" ? "paid" : "failed";
+                    order.StatusPayment = vnpayData["vnp_ResponseCode"] == "00" ? "paid" : "failed";
                     _context.Orders.Update(order);
                     _context.SaveChanges();
                 }

@@ -7,8 +7,6 @@ public partial class Order
 {
     public int OrderId { get; set; }
 
-    public int? FlowerId { get; set; }
-
     public int? UserId { get; set; }
 
     public string? PhoneNumber { get; set; }
@@ -25,19 +23,15 @@ public partial class Order
 
     public int? CartId { get; set; }
 
-    public decimal? TotalPrice { get; set; }
+    public string? StatusPayment { get; set; }
 
-    public string? Status { get; set; }
+    public decimal? TotalPrice { get; set; }
 
     public virtual Address? Address { get; set; }
 
     public virtual Cart? Cart { get; set; }
 
-    public virtual FlowerInfo? Flower { get; set; }
-
     public virtual ICollection<OrdersDetail> OrdersDetails { get; set; } = new List<OrdersDetail>();
-
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 
     public virtual User? User { get; set; }
 

@@ -135,7 +135,7 @@ namespace MyShop.Controllers
         }
         [HttpPut("UpdateSeller")]
         [Authorize(Roles = "seller")] // Chỉ seller mới có quyền cập nhật thông tin
-        public async Task<IActionResult> UpdateSeller([FromForm] UpdateSellerDto sellerDto)
+        public async Task<IActionResult> UpdateSeller([FromBody] UpdateSellerDto sellerDto)
         {
             try
             {

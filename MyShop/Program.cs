@@ -62,7 +62,7 @@ namespace MyShop
             //Đăng ký UserService vào Dependency Injection(DI)
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IFlowerService, FlowerService>();
-            //Đăng ký IHttpClientFactory để sử dụng HttpClient
+            Đăng ký IHttpClientFactory để sử dụng HttpClient
             builder.Services.AddHttpClient();
 
             var configuration = builder.Configuration;
@@ -75,8 +75,6 @@ namespace MyShop
 
             // Đăng ký VNPayService vào Dependency Injection (DI)
             builder.Services.AddScoped<VNPayService>();
-
-
 
 
 
@@ -104,7 +102,7 @@ namespace MyShop
             {
 
 
-                 //Thêm bộ lọc để loại bỏ các trường không mong muốn
+                // //Thêm bộ lọc để loại bỏ các trường không mong muốn
                 c.OperationFilter<RemoveUnusedFieldsOperationFilter>();
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {

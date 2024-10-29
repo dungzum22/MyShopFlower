@@ -25,8 +25,6 @@ public partial class User
 
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
 
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
-
     public virtual ICollection<Seller> Sellers { get; set; } = new List<Seller>();
 
     public virtual ICollection<UserInfo> UserInfos { get; set; } = new List<UserInfo>();

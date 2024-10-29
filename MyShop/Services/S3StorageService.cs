@@ -103,4 +103,4 @@ public class S3StorageService
     }
 }
 
-// Lưu ý: Để sử dụng MimeUtility, bạn có thể thêm thư viện "MimeMapping" thông qua NuGet.
+
