@@ -112,43 +112,40 @@ public class FlowerInfoController : ControllerBase
     [Authorize(Roles = "seller")] // Only sellers can update flowers
     public async Task<IActionResult> UpdateFlower(int id, [FromForm] FlowerDto flowerDto)
     {
-        // Lấy userId từ token JWT
+        // Retrieve userId from JWT token
         var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
         {
             return Unauthorized("You must be logged in as a seller to update flowers.");
         }
 
-        // Kiểm tra xem user hiện tại có phải là seller không
+        // Check if the current user is a seller
         var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
         if (seller == null)
         {
             return Unauthorized("You must be a seller to update flowers.");
         }
 
-        // Tìm hoa dựa vào ID
+        // Find the flower by ID
         var flower = await _context.FlowerInfos.FirstOrDefaultAsync(f => f.FlowerId == id);
         if (flower == null)
         {
             return NotFound("Flower not found.");
         }
 
-        // Kiểm tra xem seller hiện tại có phải là chủ sở hữu của bông hoa không
+        // Check if the current seller owns the flower
         if (flower.SellerId != seller.SellerId)
         {
             return Forbid("You do not have permission to update this flower.");
         }
 
-        // Tính sự chênh lệch của số lượng hoa
-        int quantityDifference = flowerDto.AvailableQuantity - flower.AvailableQuantity;
-
-        // Cập nhật thông tin của bông hoa
+        // Update the flower details
         flower.FlowerName = flowerDto.FlowerName;
         flower.FlowerDescription = flowerDto.FlowerDescription;
-        flower.Price = flowerDto.Price;
+        flower.Price = flowerDto.Price; // assuming this is already a decimal
         flower.AvailableQuantity = flowerDto.AvailableQuantity;
 
-        // Xử lý upload hình ảnh nếu có cung cấp hình ảnh mới
+        // Handle image upload if a new image is provided
         if (flowerDto.Image != null && flowerDto.Image.Length > 0)
         {
             var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(flowerDto.Image.FileName)}";
@@ -157,7 +154,7 @@ public class FlowerInfoController : ControllerBase
                 using (var stream = flowerDto.Image.OpenReadStream())
                 {
                     var imageUrl = await _s3StorageService.UploadFileAsync(stream, fileName);
-                    flower.ImageUrl = imageUrl; // Cập nhật lại URL của hình ảnh
+                    flower.ImageUrl = imageUrl; // Update the image URL
                 }
             }
             catch (Exception ex)
@@ -167,14 +164,11 @@ public class FlowerInfoController : ControllerBase
             }
         }
 
-        // Đánh dấu đối tượng là đã được thay đổi
+        // Mark the entity as modified
         _context.Entry(flower).State = EntityState.Modified;
 
         try
         {
-            // Cập nhật bảng seller - chỉ cập nhật quantity (không tăng total_product vì đây là cập nhật, không phải tạo mới)
-            seller.Quantity += quantityDifference; // Thay đổi số lượng dựa trên sự chênh lệch
-            _context.Sellers.Update(seller);
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateConcurrencyException)
@@ -189,7 +183,36 @@ public class FlowerInfoController : ControllerBase
             }
         }
 
-        return Ok("Flower updated successfully.");
+        // Get all flowers by the current seller's ID
+        var flowersBySeller = await _context.FlowerInfos
+            .Where(f => f.SellerId == seller.SellerId)
+            .Select(f => new
+            {
+                FlowerId = f.FlowerId,
+                FlowerName = f.FlowerName,
+                FlowerDescription = f.FlowerDescription,
+                Price = f.Price,
+                AvailableQuantity = f.AvailableQuantity,
+                ImageUrl = f.ImageUrl,
+                CategoryId = f.CategoryId,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+        return Ok(new
+        {
+            Message = "Flower updated successfully.",
+            UpdatedFlower = new
+            {
+                FlowerId = flower.FlowerId,
+                FlowerName = flower.FlowerName,
+                FlowerDescription = flower.FlowerDescription,
+                Price = flower.Price,
+                AvailableQuantity = flower.AvailableQuantity,
+                ImageUrl = flower.ImageUrl,
+                CategoryId = flower.CategoryId,
+            },
+            SellerFlowers = flowersBySeller
+        });
     }
 
 
@@ -229,7 +252,7 @@ public class FlowerInfoController : ControllerBase
         }
     }
     [HttpGet("GetFlowerById/{id}")]
-    [AllowAnonymous] 
+    [AllowAnonymous]
     public async Task<IActionResult> GetFlowerById(int id)
     {
         try

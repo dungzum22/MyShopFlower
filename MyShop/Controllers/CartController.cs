@@ -63,15 +63,11 @@ namespace MyShop.Controllers
                 // Sử dụng trực tiếp đường dẫn từ bảng Flower_Info
                 string imageUrl = cartItem.Flower?.ImageUrl;
 
-                // Nếu cần, bạn có thể thêm kiểm tra để đảm bảo URL không null hoặc rỗng
-                if (string.IsNullOrEmpty(imageUrl))
-                {
-                    imageUrl = "path/to/default/image.jpg"; // Đặt một URL mặc định nếu không có ảnh
-                }
 
                 // Tạo đối tượng DTO cho từng sản phẩm trong giỏ hàng
                 cartItemDtos.Add(new CartItemDto
                 {
+
                     FlowerName = cartItem.Flower?.FlowerName,
                     ImageUrl = imageUrl,
                     Price = cartItem.Flower?.Price ?? 0,

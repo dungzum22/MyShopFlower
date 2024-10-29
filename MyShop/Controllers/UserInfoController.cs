@@ -50,7 +50,6 @@ namespace MyShop.Controllers
                     return Unauthorized("Invalid user ID format in the token.");
                 }
 
-
                 // Tìm UserInfo dựa trên user_id
                 var userInfo = await _context.UserInfos.FirstOrDefaultAsync(u => u.UserId == userId);
                 if (userInfo == null)
@@ -59,20 +58,62 @@ namespace MyShop.Controllers
                     return NotFound("UserInfo không tồn tại cho người dùng này.");
                 }
 
-                // Trả về thông tin UserInfo
-                return Ok(new
+                // Nếu user là Seller, lấy thêm thông tin từ bảng Seller
+                SellerDto sellerInfo = null;
+                if (userInfo.IsSeller == true)
                 {
-                    userInfo.UserInfoId,
-                    userInfo.FullName,
-                    userInfo.Address,
-                    userInfo.BirthDate,
-                    userInfo.Sex,
-                    userInfo.Avatar,
-                    userInfo.Points,
-                    userInfo.CreatedDate,
-                    userInfo.UpdatedDate,
-                    Role = (bool)userInfo.IsSeller ? "Seller" : "User bình thường"
-                });
+                    var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+                    if (seller != null)
+                    {
+                        sellerInfo = new SellerDto
+                        {
+                            SellerId = seller.SellerId,
+                            ShopName = seller.ShopName,
+                            AddressSeller = seller.AddressSeller,
+                            Introduction = seller.Introduction,
+                            Role = seller.Role,
+                            TotalProduct = seller.TotalProduct,
+                            Quantity = seller.Quantity,
+                            CreatedAt = seller.CreatedAt ?? DateTime.UtcNow,
+                            UpdatedAt = seller.UpdatedAt ?? DateTime.MinValue
+                        };
+                    }
+                }
+
+                // Trả về thông tin UserInfo và SellerInfo nếu có
+                if (userInfo.IsSeller == true)
+                {
+                    return Ok(new
+                    {
+                        userInfo.UserInfoId,
+                        userInfo.FullName,
+                        userInfo.Address,
+                        userInfo.BirthDate,
+                        userInfo.Sex,
+                        userInfo.Avatar,
+                        userInfo.Points,
+                        userInfo.CreatedDate,
+                        userInfo.UpdatedDate,
+                        Role = "Seller",
+                        SellerInfo = sellerInfo
+                    });
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        userInfo.UserInfoId,
+                        userInfo.FullName,
+                        userInfo.Address,
+                        userInfo.BirthDate,
+                        userInfo.Sex,
+                        userInfo.Avatar,
+                        userInfo.Points,
+                        userInfo.CreatedDate,
+                        userInfo.UpdatedDate,
+                        Role = "User bình thường"
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -84,20 +125,26 @@ namespace MyShop.Controllers
 
 
 
+
         // API PUT Update UserInfo: Cập nhật thông tin người dùng và upload hình ảnh
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateUserInfo([FromForm] UpdateUserInfoDto userInfoDto)
+        public async Task<IActionResult> UpdateUserInfo([FromBody] UpdateUserInfoDto userInfoDto)
         {
             // Lấy user_id từ JWT token
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
             if (userIdClaim == null)
             {
+                _logger.LogError("User ID claim is missing from the JWT token.");
                 return Unauthorized("Không thể lấy thông tin người dùng từ token.");
             }
 
-            //int userId = int.Parse(userIdClaim.Value);
-            var getUserId = User.Claims.FirstOrDefault(c => c.Type == "UserId");
-            int userId = int.Parse(getUserId.Value);
+            // Chuyển đổi userId từ chuỗi sang số nguyên
+            if (!int.TryParse(userIdClaim.Value, out int userId))
+            {
+                _logger.LogError("Invalid user ID format in the token: {UserId}", userIdClaim.Value);
+                return Unauthorized("Định dạng user ID không hợp lệ.");
+            }
+
             // Tìm UserInfo dựa trên user_id
             var userInfo = await _context.UserInfos.FirstOrDefaultAsync(u => u.UserId == userId);
             if (userInfo == null)
@@ -156,12 +203,68 @@ namespace MyShop.Controllers
                 }
             }
 
-            return Ok("UserInfo đã được cập nhật thành công.");
+            // Nếu là người bán, lấy thêm thông tin từ bảng Seller
+            SellerDto sellerInfo = null;
+            if (userInfo.IsSeller == true)
+            {
+                var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == userId);
+                if (seller != null)
+                {
+                    sellerInfo = new SellerDto
+                    {
+                        SellerId = seller.SellerId,
+                        ShopName = seller.ShopName,
+                        AddressSeller = seller.AddressSeller,
+                        Introduction = seller.Introduction,
+                        Role = seller.Role,
+                        TotalProduct = seller.TotalProduct,
+                        Quantity = seller.Quantity,
+                        CreatedAt = seller.CreatedAt ?? DateTime.UtcNow,
+                        UpdatedAt = seller.UpdatedAt ?? DateTime.MinValue
+                    };
+                }
+            }
+
+            // Trả về thông tin UserInfo và SellerInfo nếu có
+            if (userInfo.IsSeller == true)
+            {
+                return Ok(new
+                {
+                    userInfo.UserInfoId,
+                    userInfo.FullName,
+                    userInfo.Address,
+                    userInfo.BirthDate,
+                    userInfo.Sex,
+                    userInfo.Avatar,
+                    userInfo.Points,
+                    userInfo.CreatedDate,
+                    userInfo.UpdatedDate,
+                    Role = "Seller",
+                    SellerInfo = sellerInfo
+                });
+            }
+            else
+            {
+                return Ok(new
+                {
+                    userInfo.UserInfoId,
+                    userInfo.FullName,
+                    userInfo.Address,
+                    userInfo.BirthDate,
+                    userInfo.Sex,
+                    userInfo.Avatar,
+                    userInfo.Points,
+                    userInfo.CreatedDate,
+                    userInfo.UpdatedDate,
+                    Role = "User bình thường"
+                });
+            }
         }
+
 
         // API POST Create UserInfo: Tạo mới thông tin người dùng
         [HttpPost("create")]
-        public async Task<IActionResult> CreateUserInfo([FromForm] CreateUserInfoDto createUserInfoDto)
+        public async Task<IActionResult> CreateUserInfo([FromBody] CreateUserInfoDto createUserInfoDto)
         {
             // Lấy user_id từ JWT token
             var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
@@ -251,7 +354,7 @@ namespace MyShop.Controllers
                         userInfo.Points,
                         userInfo.CreatedDate,
                         userInfo.UpdatedDate,
-                        Role = (bool)userInfo.IsSeller ? "Seller" : "User bình thường"
+                        IsSeller = userInfo.IsSeller
                     })
                     .ToListAsync();
 
@@ -261,8 +364,62 @@ namespace MyShop.Controllers
                     return NotFound("Không có thông tin người dùng nào.");
                 }
 
-                // Trả về danh sách UserInfo
-                return Ok(allUsers);
+                // Thêm thông tin seller nếu người dùng là seller
+                var detailedUsers = new List<object>();
+
+                foreach (var user in allUsers)
+                {
+                    if (user.IsSeller == true)
+                    {
+                        var seller = await _context.Sellers.FirstOrDefaultAsync(s => s.UserId == user.UserInfoId);
+                        var sellerInfo = new
+                        {
+                            SellerId = seller?.SellerId ?? 0,
+                            ShopName = seller?.ShopName,
+                            AddressSeller = seller?.AddressSeller,
+                            Introduction = seller?.Introduction,
+                            Role = seller?.Role,
+                            TotalProduct = seller?.TotalProduct ?? 0,
+                            Quantity = seller?.Quantity ?? 0,
+                            CreatedAt = seller?.CreatedAt ?? DateTime.UtcNow,
+                            UpdatedAt = seller?.UpdatedAt ?? DateTime.MinValue
+                        };
+
+                        detailedUsers.Add(new
+                        {
+                            user.UserInfoId,
+                            user.FullName,
+                            user.Address,
+                            user.BirthDate,
+                            user.Sex,
+                            user.Avatar,
+                            user.Points,
+                            user.CreatedDate,
+                            user.UpdatedDate,
+                            Role = "Seller",
+                            SellerInfo = sellerInfo
+                        });
+                    }
+                    else
+                    {
+                        detailedUsers.Add(new
+                        {
+                            user.UserInfoId,
+                            user.FullName,
+                            user.Address,
+                            user.BirthDate,
+                            user.Sex,
+                            user.Avatar,
+                            user.Points,
+                            user.CreatedDate,
+                            user.UpdatedDate,
+                            Role = "User bình thường"
+                        });
+                    }
+                }
+
+                // Trả về danh sách chi tiết người dùng
+                return Ok(detailedUsers);
             }
             catch (Exception ex)
             {
@@ -271,5 +428,6 @@ namespace MyShop.Controllers
                 return StatusCode(500, "Có lỗi không mong muốn xảy ra.");
             }
         }
+
     }
 }
